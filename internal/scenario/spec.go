@@ -67,6 +67,25 @@ type Spec struct {
 
 	// Rubric defines how a run is graded.
 	Rubric Rubric `yaml:"rubric"`
+
+	// Oracle holds the reference-solution answer for this scenario, used by the
+	// `oracle` harness (the grader's FULL correctness gate). The fix itself is
+	// the compose override at oracle/fix.override.yaml; this is the matching
+	// diagnosis a correct responder would submit.
+	Oracle OracleSpec `yaml:"oracle"`
+}
+
+// OracleSpec is the scenario's reference solution answer.
+type OracleSpec struct {
+	Submission SubmissionSpec `yaml:"submission"`
+}
+
+// SubmissionSpec mirrors the agent's final submission (root cause + actions +
+// postmortem) as authored for the reference solution.
+type SubmissionSpec struct {
+	RootCause  string `yaml:"root_cause"`
+	Actions    string `yaml:"actions"`
+	Postmortem string `yaml:"postmortem"`
 }
 
 // Reference is a citation to a real incident/post-mortem backing the scenario.

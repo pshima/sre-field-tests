@@ -108,3 +108,17 @@ rubric:
       params:
         pattern: "(mem_limit|--memory|memory\\.max)"
         without_pattern: "CACHE_MAX"
+
+oracle:
+  submission:
+    root_cause: >
+      Unbounded in-memory cache leak caused the orders service to exceed its
+      cgroup memory limit and be OOM-killed (exit 137), repeatedly.
+    actions: >
+      Set CACHE_MAX to bound the cache and recreated the orders container;
+      memory then stabilized under the limit.
+    postmortem: >
+      The service cached request data without bound. Under sustained load RSS
+      grew until the 256Mi cgroup cap triggered the kernel OOM killer. Bounding
+      the cache (CACHE_MAX) resolved it. Follow-ups: add a memory-usage SLO alert
+      and a cache-size guardrail in code review.

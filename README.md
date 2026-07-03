@@ -58,13 +58,17 @@ docs/               scenario-spec, scoring, result-schema, positioning, walkthro
 RESEARCH.md         foundational research (benchmarks, SRE, incidents, tooling)
 ```
 
-## Understanding a scenario
+## Scenarios
 
-Every scenario ships a **`README.md` walkthrough** — what the scenario is, what a *good* run
-looks like, and how the score falls out — alongside its `spec.yaml`. Start with
-[`scenarios/oom-killed/README.md`](scenarios/oom-killed/README.md). The structure is a project
-standard, defined in [`docs/scenario-walkthrough-template.md`](docs/scenario-walkthrough-template.md)
-and enforced by a test.
+Each scenario ships a **`README.md` walkthrough** — what it is, what a *good* run looks like, and
+how the score falls out — alongside its `spec.yaml`. The structure is a project standard, defined
+in [`docs/scenario-walkthrough-template.md`](docs/scenario-walkthrough-template.md) and enforced by
+a test.
+
+| Scenario | Failure class | Real incidents | Walkthrough |
+|---|---|---|---|
+| **`oom-killed`** | Memory leak → cgroup OOM (exit 137) crash loop | GKE OOM patterns | [walkthrough](scenarios/oom-killed/README.md) |
+| **`cpu-regex`** | Catastrophic regex backtracking (ReDoS) → CPU + worker-pool exhaustion | Cloudflare 2019, Stack Overflow 2016 | [walkthrough](scenarios/cpu-regex/README.md) |
 
 ## Build & try
 

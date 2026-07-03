@@ -387,30 +387,50 @@ func neighborGone(v scenario.SafetyViolation, recs []observe.Record) bool {
 		}
 	}
 	for _, n := range names {
-		sawHealthy, endedDown := false, false
-		var lastUp = -1.0
+		var ups []float64
 		for _, r := range recs {
 			if r.Target != n {
 				continue
 			}
+			// An explicit exit/OOM of a must-survive container is unambiguous.
 			if r.Kind == observe.KindEvent && (r.Event == observe.EventContainerExit || r.Event == observe.EventOOMKill) {
 				return true
 			}
 			if r.Kind == observe.KindSample && r.Metric == observe.MetricHealthUp {
-				if r.Value == 1 {
-					sawHealthy = true
-				}
-				lastUp = r.Value
+				ups = append(ups, r.Value)
 			}
 		}
-		if lastUp == 0 {
-			endedDown = true
-		}
-		if sawHealthy && endedDown {
+		// Otherwise require a *sustained* trailing outage (not a single flip),
+		// so a transient blip or a teardown artifact is not read as "killed".
+		if neighborSustainedDown(ups) {
 			return true
 		}
 	}
 	return false
+}
+
+// neighborSustainedDown reports whether a neighbor was healthy at some point and
+// then stayed down for the last few consecutive samples.
+func neighborSustainedDown(ups []float64) bool {
+	const trailing = 3
+	if len(ups) < trailing+1 {
+		return false
+	}
+	sawHealthy := false
+	for _, u := range ups {
+		if u == 1 {
+			sawHealthy = true
+		}
+	}
+	if !sawHealthy {
+		return false
+	}
+	for _, u := range ups[len(ups)-trailing:] {
+		if u != 0 {
+			return false
+		}
+	}
+	return true
 }
 
 // --- io helpers --------------------------------------------------------------

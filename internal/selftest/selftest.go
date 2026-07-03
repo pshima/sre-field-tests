@@ -92,26 +92,26 @@ func Run(ctx context.Context, spec *scenario.Spec, tierName string, opts Options
 		return nil, fmt.Errorf("fault target service %q not found in environment", spec.Fault.Target)
 	}
 	rep := &Report{Scenario: spec.ID}
+	hurl := healthURL(env, spec)
 
-	// Check 1: the fault manifests — restart count climbs as the target is
-	// repeatedly OOM-killed within the observation window.
-	r0, _ := restartCount(ctx, opts.Socket, target)
+	// Check 1: the fault manifests. This is scenario-agnostic — a fault shows up
+	// either as the target crash-looping (restart count climbs, e.g. OOM) OR as
+	// the service going unresponsive while still "up" (health checks fail, e.g.
+	// CPU exhaustion). Either signal counts.
 	opts.Log.Info("self-test: watching for fault", "target", target, "window", opts.ManifestWindow)
-	deltaMid := waitForRestartDelta(ctx, opts.Socket, target, r0, 2, opts.ManifestWindow)
-	rMid, _ := restartCount(ctx, opts.Socket, target)
-	rep.add("fault-manifests", deltaMid >= 2,
-		fmt.Sprintf("restart count %d -> %d (delta %d, need >=2)", r0, rMid, rMid-r0))
+	rd1, hf1 := observeFault(ctx, opts.Socket, target, hurl, opts.ManifestWindow)
+	rep.add("fault-manifests", rd1 >= 2 || hf1 >= 0.5,
+		fmt.Sprintf("restart delta %d, health-fail ratio %.0f%% (need restarts>=2 or health-fail>=50%%)", rd1, hf1*100))
 
-	// Check 2: an untouched system stays broken — it keeps OOM-killing rather
-	// than self-healing over a second window.
+	// Check 2: an untouched system stays broken over a second window rather than
+	// self-healing.
 	half := opts.ManifestWindow / 2
 	if half < 8*time.Second {
 		half = 8 * time.Second
 	}
-	sleepCtx(ctx, half)
-	rEnd, _ := restartCount(ctx, opts.Socket, target)
-	rep.add("no-op-stays-broken", rEnd > rMid,
-		fmt.Sprintf("restart count still climbing %d -> %d during no-op", rMid, rEnd))
+	rd2, hf2 := observeFault(ctx, opts.Socket, target, hurl, half)
+	rep.add("no-op-stays-broken", rd2 >= 1 || hf2 >= 0.5,
+		fmt.Sprintf("restart delta %d, health-fail ratio %.0f%% during no-op", rd2, hf2*100))
 
 	// Check 3: the oracle fix recovers it — apply the override, then require the
 	// target to stay running with a frozen restart count and a healthy endpoint
@@ -139,26 +139,35 @@ func (r *Report) add(name string, pass bool, detail string) {
 	r.Checks = append(r.Checks, Check{Name: name, Pass: pass, Detail: detail})
 }
 
-// waitForRestartDelta polls until the restart count rises by at least want above
-// base, or the window elapses; returns the observed delta.
-func waitForRestartDelta(ctx context.Context, socket, name string, base, want int, window time.Duration) int {
+// observeFault watches the target over a window and returns two independent
+// fault signals: how much the restart count climbed (crash-loop faults like OOM)
+// and the fraction of health probes that failed (unresponsive faults like CPU
+// exhaustion). A scenario manifests if either signal is significant.
+func observeFault(ctx context.Context, socket, name, healthURL string, window time.Duration) (restartDelta int, healthFailRatio float64) {
+	base, _ := restartCount(ctx, socket, name)
 	deadline := time.Now().Add(window)
 	t := time.NewTicker(time.Second)
 	defer t.Stop()
-	for {
-		cur, _ := restartCount(ctx, socket, name)
-		if cur-base >= want {
-			return cur - base
-		}
-		if time.Now().After(deadline) {
-			return cur - base
+	probes, fails := 0, 0
+	for time.Now().Before(deadline) {
+		if healthURL != "" {
+			probes++
+			if !probeHealthy(ctx, healthURL) {
+				fails++
+			}
 		}
 		select {
 		case <-ctx.Done():
-			return cur - base
+			goto done
 		case <-t.C:
 		}
 	}
+done:
+	cur, _ := restartCount(ctx, socket, name)
+	if probes > 0 {
+		healthFailRatio = float64(fails) / float64(probes)
+	}
+	return cur - base, healthFailRatio
 }
 
 // sustainHealthy asserts the target stays running with a frozen restart count

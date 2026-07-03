@@ -63,8 +63,8 @@ func (e *engineClient) inspect(ctx context.Context, name string) (*containerStat
 	return &cs, nil
 }
 
-// memStats is the subset of GET /containers/{id}/stats we consume.
-type memStats struct {
+// statsSample is the subset of GET /containers/{id}/stats we consume.
+type statsSample struct {
 	MemoryStats struct {
 		Usage uint64 `json:"usage"`
 		Limit uint64 `json:"limit"`
@@ -74,21 +74,33 @@ type memStats struct {
 			InactiveFile uint64 `json:"inactive_file"`
 		} `json:"stats"`
 	} `json:"memory_stats"`
+	CPUStats struct {
+		CPUUsage struct {
+			TotalUsage uint64 `json:"total_usage"`
+		} `json:"cpu_usage"`
+		SystemCPUUsage uint64 `json:"system_cpu_usage"`
+		OnlineCPUs     int    `json:"online_cpus"`
+	} `json:"cpu_stats"`
 }
 
-// statsOneShot returns (workingSetBytes, limitBytes). It uses stream=false so a
-// single sample returns promptly; a container that is mid-restart yields an
-// error, which the caller treats as "no sample this tick".
+// oneShotStats fetches a single stats sample (fast; no delta wait).
+func (e *engineClient) oneShotStats(ctx context.Context, name string) (statsSample, error) {
+	var ss statsSample
+	err := e.getJSON(ctx, "/containers/"+url.PathEscape(name)+"/stats?stream=false&one-shot=true", &ss)
+	return ss, err
+}
+
+// statsOneShot returns (workingSetBytes, limitBytes).
 func (e *engineClient) statsOneShot(ctx context.Context, name string) (usage, limit uint64, err error) {
-	var ms memStats
-	if err := e.getJSON(ctx, "/containers/"+url.PathEscape(name)+"/stats?stream=false&one-shot=true", &ms); err != nil {
+	ss, err := e.oneShotStats(ctx, name)
+	if err != nil {
 		return 0, 0, err
 	}
-	u := ms.MemoryStats.Usage
-	if ms.MemoryStats.Stats.InactiveFile < u {
-		u -= ms.MemoryStats.Stats.InactiveFile
+	u := ss.MemoryStats.Usage
+	if ss.MemoryStats.Stats.InactiveFile < u {
+		u -= ss.MemoryStats.Stats.InactiveFile
 	}
-	return u, ms.MemoryStats.Limit, nil
+	return u, ss.MemoryStats.Limit, nil
 }
 
 // engineEvent is the subset of GET /events we consume.

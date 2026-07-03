@@ -48,6 +48,8 @@ func Run(ctx context.Context, cfg Config, w *Writer, log *slog.Logger) {
 		switch id {
 		case "cgroup-mem":
 			launch(func() { collectContainerState(ctx, client, cfg.Containers, interval, emit, log) })
+		case "cgroup-cpu":
+			launch(func() { collectContainerCPU(ctx, client, cfg.Containers, interval, emit) })
 		case "docker-events":
 			launch(func() { collectDockerEvents(ctx, client, cfg.Containers, emit, log) })
 		case "http-health":
@@ -79,6 +81,12 @@ func collectContainerState(ctx context.Context, c *engineClient, targets map[str
 			for logical, cname := range targets {
 				cs, err := c.inspect(ctx, cname)
 				if err != nil {
+					if ctx.Err() != nil {
+						// Shutting down: the inspect failed because our context
+						// was cancelled, not because the container is unhealthy.
+						// Emitting a down-sample here would be a teardown artifact.
+						return
+					}
 					// Container may be mid-restart or gone; record it as down.
 					emit(Sample(now, "cgroup-mem", logical, MetricHealthUp, 0, "1"))
 					continue
@@ -93,6 +101,43 @@ func collectContainerState(ctx context.Context, c *engineClient, targets map[str
 					emit(Sample(now, "cgroup-mem", logical, MetricMemoryUsage, float64(usage), "By"))
 					emit(Sample(now, "cgroup-mem", logical, MetricMemoryLimit, float64(limit), "By"))
 				}
+			}
+		}
+	}
+}
+
+// collectContainerCPU emits per-container CPU utilization (percent of one core,
+// so a container pinned to its 1-CPU cap reads ~100). It computes the delta
+// between consecutive one-shot samples itself, avoiding the ~1s blocking wait of
+// the streaming stats endpoint — important for a responsive, low-overhead poll.
+func collectContainerCPU(ctx context.Context, c *engineClient, targets map[string]string, interval time.Duration, emit func(Record)) {
+	type prev struct{ total, system uint64 }
+	last := map[string]prev{}
+	t := time.NewTicker(interval)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case now := <-t.C:
+			for logical, cname := range targets {
+				ss, err := c.oneShotStats(ctx, cname)
+				if err != nil {
+					continue
+				}
+				total := ss.CPUStats.CPUUsage.TotalUsage
+				system := ss.CPUStats.SystemCPUUsage
+				online := ss.CPUStats.OnlineCPUs
+				if online == 0 {
+					online = 1
+				}
+				if p, ok := last[cname]; ok && system > p.system && total >= p.total {
+					cpuDelta := float64(total - p.total)
+					sysDelta := float64(system - p.system)
+					pct := (cpuDelta / sysDelta) * float64(online) * 100.0
+					emit(Sample(now, "cgroup-cpu", logical, MetricCPUUtil, pct, "%"))
+				}
+				last[cname] = prev{total: total, system: system}
 			}
 		}
 	}

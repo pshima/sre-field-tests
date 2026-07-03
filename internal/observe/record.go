@@ -77,6 +77,7 @@ const (
 	MetricMemoryUsage    = "system.memory.usage"           // bytes, cgroup memory.current
 	MetricMemoryLimit    = "system.memory.limit"           // bytes, cgroup memory.max
 	MetricOOMKillCount   = "system.memory.oom_kill.count"  // count, cgroup memory.events
+	MetricCPUUtil        = "system.cpu.utilization"        // percent of one core (0..100*cores)
 	MetricProcRSS        = "process.memory.rss"            // bytes
 	MetricOpenFDs        = "process.open_file_descriptors" // count
 	MetricHTTPDurationMS = "http.server.request.duration"  // ms

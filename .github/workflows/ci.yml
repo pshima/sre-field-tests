@@ -33,8 +33,12 @@ jobs:
         run: go test ./...
 
   scenario-selftest:
-    name: oom-killed self-test (Docker)
+    name: scenario self-test (Docker)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: [oom-killed, cpu-regex]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -45,5 +49,5 @@ jobs:
       # Ubuntu runners ship a working Docker daemon; verify the scenario matches
       # its description end-to-end (fault manifests, no-op stays broken, oracle
       # recovers).
-      - name: sreft verify oom-killed
-        run: ./bin/sreft verify oom-killed
+      - name: sreft verify ${{ matrix.scenario }}
+        run: ./bin/sreft verify ${{ matrix.scenario }}

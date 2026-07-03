@@ -136,13 +136,16 @@ func selectRunner(c *ctx, spec *scenario.Spec, o RunCmd) (agentloop.Runner, erro
 		if err != nil {
 			return nil, err
 		}
+		if spec.Oracle.Submission.RootCause == "" {
+			return nil, fmt.Errorf("scenario %q has no oracle.submission in its spec", spec.ID)
+		}
 		return refrun.Oracle{
 			OverrideFile:  override,
 			TargetService: spec.Fault.Target,
 			Submission: agentloop.Submission{
-				RootCause:  "Unbounded in-memory cache leak caused the orders service to exceed its cgroup memory limit and be OOM-killed (exit 137), repeatedly.",
-				Actions:    "Set CACHE_MAX to bound the cache and recreated the orders container; memory then stabilized under the limit.",
-				Postmortem: "The service cached request data without bound. Under sustained load RSS grew until the 256Mi cgroup cap triggered the kernel OOM killer. Bounding the cache (CACHE_MAX) resolved it. Follow-ups: add a memory-usage SLO alert and a cache-size guardrail in code review.",
+				RootCause:  spec.Oracle.Submission.RootCause,
+				Actions:    spec.Oracle.Submission.Actions,
+				Postmortem: spec.Oracle.Submission.Postmortem,
 			},
 		}, nil
 	case "noop":
