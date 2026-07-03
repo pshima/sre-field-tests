@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -39,7 +40,11 @@ func runInstance(c *ctx, spec *scenario.Spec, o RunCmd) error {
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
+	// Ctrl-C cancels the run gracefully: the agent stops and the deferred
+	// teardown still runs (a second Ctrl-C force-quits). Without this, an
+	// interrupt would leave the scenario stack running.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
 	c.log.Info("bootstrapping", "scenario", spec.ID, "tier", o.Tier)
 	env, err := boot.Up(ctx, spec, tier)
@@ -96,12 +101,29 @@ func runInstance(c *ctx, spec *scenario.Spec, o RunCmd) error {
 		WallClock:     time.Duration(spec.Task.WallClockSeconds) * time.Second,
 		SystemPrompt:  sreSystemPrompt, TaskPrompt: spec.Task.Prompt,
 	}
-	c.log.Info("running agent", "harness", o.Harness, "model", o.Model, "instance", id)
-	res, err := runner.Run(ctx, env, cfg, dir)
-	if err != nil {
-		c.log.Warn("agent run error", "err", err)
+	// Bound the agent by the scenario's wall-clock budget. This applies to every
+	// harness (the CLI adapters run one long subprocess and would otherwise never
+	// time out). The sustain/grade/teardown steps use the outer ctx, not this
+	// deadline, so a slow agent can't eat the recovery-observation window.
+	agentCtx := ctx
+	if cfg.WallClock > 0 {
+		var cancelAgent context.CancelFunc
+		agentCtx, cancelAgent = context.WithTimeout(ctx, cfg.WallClock)
+		defer cancelAgent()
+	}
+	c.log.Info("running agent", "harness", o.Harness, "model", o.Model, "instance", id,
+		"max_seconds", int(cfg.WallClock.Seconds()))
+	fmt.Printf("Agent working (harness=%s, budget=%ds). Live activity below; full log: %s\n",
+		o.Harness, int(cfg.WallClock.Seconds()), filepath.Join(dir, "messages.jsonl"))
+	res, err := runner.Run(agentCtx, env, cfg, dir)
+	switch {
+	case err != nil:
+		c.log.Warn("agent run error", "err", err, "stopped", stoppedOf(res))
 		meta.FailureMode = instance.FailureAgentError
-	} else {
+	case res != nil && res.Stopped == "wall_clock":
+		c.log.Warn("agent hit wall-clock budget", "seconds", int(cfg.WallClock.Seconds()))
+		meta.FailureMode = instance.FailureAgentTimeout
+	default:
 		c.log.Info("agent finished", "stopped", res.Stopped, "iterations", res.Iterations)
 	}
 
@@ -252,6 +274,14 @@ func printScore(spec *scenario.Spec, r *score.Result, dir string) {
 	}
 	fmt.Printf("  notes:          %s\n", r.Notes)
 	fmt.Printf("  artifacts:      %s\n", dir)
+}
+
+// stoppedOf safely reads a Result's stop reason (nil-safe for logging).
+func stoppedOf(r *agentloop.Result) string {
+	if r == nil {
+		return "nil"
+	}
+	return r.Stopped
 }
 
 // sleepCtx sleeps for d or until ctx is cancelled.

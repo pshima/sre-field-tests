@@ -147,15 +147,48 @@ func parseClaudeStream(r io.Reader, rawFile *os.File, tenc *json.Encoder) (final
 			}
 			iterations++
 			for _, blk := range ev.Message.Content {
-				if blk.Type == "tool_use" {
+				switch blk.Type {
+				case "tool_use":
 					_ = tenc.Encode(toToolCall(blk.Name, blk.Input))
+					progress("claude", blk.Name, blk.Input, "")
+				case "text":
+					progress("claude", "", nil, blk.Text)
 				}
 			}
 		case "result":
 			finalText = ev.Result
+			progress("claude", "", nil, "✓ done")
 		}
 	}
 	return finalText, iterations, sc.Err()
+}
+
+// progress prints a concise live line to stderr so a human watching `sreft run`
+// sees what the agent is doing in real time (the full stream is still captured
+// to messages.jsonl). Either a tool call (name+input) or a text line is given.
+func progress(agent, tool string, input map[string]any, text string) {
+	switch {
+	case tool == "Bash":
+		cmd, _ := input["command"].(string)
+		fmt.Fprintf(os.Stderr, "  %s ▸ $ %s\n", agent, truncateLine(cmd, 200))
+	case tool != "":
+		fmt.Fprintf(os.Stderr, "  %s ▸ %s\n", agent, tool)
+	case strings.TrimSpace(text) != "":
+		fmt.Fprintf(os.Stderr, "  %s · %s\n", agent, truncateLine(text, 200))
+	}
+}
+
+// truncateLine collapses to the first line and caps its length for a tidy
+// single-line progress print.
+func truncateLine(s string, max int) string {
+	s = strings.TrimSpace(s)
+	if i := strings.IndexByte(s, '\n'); i >= 0 {
+		s = s[:i]
+	}
+	if len(s) > max {
+		s = s[:max] + "…"
+	}
+	return s
 }
 
 // toToolCall normalizes a CLI tool_use into our ToolCall. Bash is mapped to the
