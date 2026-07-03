@@ -202,22 +202,80 @@ func toToolCall(name string, input map[string]any) agentloop.ToolCall {
 	return agentloop.ToolCall{TS: time.Now(), Tool: name, Input: input}
 }
 
-// readOrSynthesizeSubmission returns the agent's submission.json if it wrote a
-// usable one, otherwise synthesizes one from its final message (and persists it)
-// so the grader always has an RCA to score.
+// readOrSynthesizeSubmission returns the agent's structured submission if it
+// provided one (a submission.json in schema, or a JSON object embedded in its
+// final message), otherwise synthesizes one from the final message text so the
+// grader always has an RCA to score. The bool reports whether structured output
+// was obtained (vs. synthesized).
 func readOrSynthesizeSubmission(dir, finalText string) (*agentloop.Submission, bool) {
 	path := filepath.Join(dir, instance.SubmissionFile)
+
+	// 1. The agent wrote submission.json in schema (the required path).
 	if data, err := os.ReadFile(path); err == nil {
-		var s agentloop.Submission
-		if json.Unmarshal(data, &s) == nil && (s.RootCause != "" || s.Postmortem != "") {
-			return &s, true
+		if s := parseSubmission(data); s != nil {
+			return s, true
 		}
 	}
+	// 2. The agent didn't write the file but embedded a JSON object in its final
+	//    message — extract it and persist it.
+	if s := extractSubmissionJSON(finalText); s != nil {
+		persistSubmission(path, s)
+		return s, true
+	}
+	// 3. Fallback: synthesize from the final text so grading still has an RCA.
 	s := &agentloop.Submission{RootCause: finalText, Postmortem: finalText}
+	persistSubmission(path, s)
+	return s, false
+}
+
+func parseSubmission(data []byte) *agentloop.Submission {
+	var s agentloop.Submission
+	if json.Unmarshal(data, &s) == nil && s.RootCause != "" {
+		return &s
+	}
+	return nil
+}
+
+func persistSubmission(path string, s *agentloop.Submission) {
 	if b, err := json.MarshalIndent(s, "", "  "); err == nil {
 		_ = os.WriteFile(path, b, 0o644)
 	}
-	return s, false
+}
+
+// extractSubmissionJSON pulls a submission object out of free-form final text:
+// first a ```json fenced block, then a bare {...} span containing "root_cause".
+func extractSubmissionJSON(text string) *agentloop.Submission {
+	if block := fencedJSON(text); block != "" {
+		if s := parseSubmission([]byte(block)); s != nil {
+			return s
+		}
+	}
+	// Bare object: from the first '{' before "root_cause" to the last '}'.
+	if i := strings.Index(text, "root_cause"); i >= 0 {
+		start := strings.LastIndexByte(text[:i], '{')
+		end := strings.LastIndexByte(text, '}')
+		if start >= 0 && end > start {
+			if s := parseSubmission([]byte(text[start : end+1])); s != nil {
+				return s
+			}
+		}
+	}
+	return nil
+}
+
+// fencedJSON returns the contents of the first ```json ... ``` (or ``` ... ```)
+// fenced block, if any.
+func fencedJSON(text string) string {
+	fences := []string{"```json", "```JSON", "```"}
+	for _, f := range fences {
+		if i := strings.Index(text, f); i >= 0 {
+			rest := text[i+len(f):]
+			if j := strings.Index(rest, "```"); j >= 0 {
+				return strings.TrimSpace(rest[:j])
+			}
+		}
+	}
+	return ""
 }
 
 // buildPrompts assembles the system framing (SRE role + submission protocol)
@@ -225,9 +283,15 @@ func readOrSynthesizeSubmission(dir, finalText string) (*agentloop.Submission, b
 // every CLI adapter so the task presented is identical across harnesses.
 func buildPrompts(cfg agentloop.Config, env *bootstrap.Env, instanceDir string) (system, user string) {
 	subPath := filepath.Join(instanceDir, instance.SubmissionFile)
-	system = cfg.SystemPrompt + "\n\nWhen you have restored service, you MUST write your final " +
-		"analysis as JSON to the file " + subPath + " with keys: \"root_cause\", \"actions_taken\", " +
-		"and \"postmortem\". This submission is required and is how your work is graded."
+	system = cfg.SystemPrompt + "\n\nWhen you have restored service you MUST write your final " +
+		"analysis to the file " + subPath + " as a JSON object with EXACTLY these three string " +
+		"keys and no others:\n" +
+		`{"root_cause": "...", "actions_taken": "...", "postmortem": "..."}` + "\n" +
+		"Write it in one command, e.g.:\n" +
+		"  cat > " + subPath + " <<'EOF'\n  { ... }\n  EOF\n" +
+		"Keep each field a single JSON string. Put root_cause and actions_taken in their own " +
+		"fields (do not stuff everything into one). This file is REQUIRED and is how your work is " +
+		"graded — do not put your analysis only in your chat reply."
 
 	var containers []string
 	for _, cname := range env.Services() {

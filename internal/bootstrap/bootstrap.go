@@ -30,6 +30,11 @@ type Env struct {
 	composeDir string
 	// services maps compose service name -> container name.
 	services map[string]string
+	// workspace is a per-run throwaway copy of the scenario directory that
+	// compose runs from, so an agent (host vantage, docker access) edits the
+	// copy rather than the committed repo. Removed on Down. Empty when the env
+	// was reconstructed for a standalone teardown.
+	workspace string
 }
 
 // Bootstrapper stands up and tears down one infra tier for a scenario.
