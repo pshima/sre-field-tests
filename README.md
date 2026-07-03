@@ -126,8 +126,9 @@ in each scenario's walkthrough.
   each run reproducible and comparable (`sonnet-5 × oom-killed × seed 1` is one instance).
 - **Infra bootstrap** — the repeatable environment build, in **tiers**: Tier 0 = local Docker
   (built); cloud/Terraform = later.
-- **Harness** — the agent scaffold: `neutral-go` (the OpenRouter tool loop), or the keyless
-  reference harnesses `oracle` / `noop`.
+- **Harness** — the agent scaffold: `neutral-go` (the OpenRouter tool loop), `claude-cli` /
+  `codex-cli` (installed CLI agents driven headlessly, using their subscriptions), or the keyless
+  reference harnesses `oracle` / `noop`. Each is a separate, disclosed scorecard column.
 
 ---
 
@@ -213,16 +214,34 @@ make build                                              # static, CGO-free binar
 go test ./...                    # unit tests (the Docker self-test is opt-in: SREFT_DOCKER_IT=1)
 ```
 
-### Running live models (OpenRouter)
+### Running real agents
 
-The neutral harness routes any model through OpenRouter's OpenAI-compatible API. Set a key and
-run the identical pipeline against real models:
+A **harness** is the agent scaffold that works the incident. The same pipeline (observe → grade)
+scores every harness; they differ only in *who* drives the shell, so each is a distinct,
+disclosed scorecard column.
+
+**Installed CLI agents (no API key — uses your existing subscriptions).** `claude-cli` and
+`codex-cli` run the installed Claude Code / Codex CLI headlessly on the host with docker access to
+the scenario stack, and translate the CLI's transcript into the standard instance artifacts:
+
+```sh
+./bin/sreft run oom-killed --harness claude-cli --model default --seed 1
+./bin/sreft run oom-killed --harness codex-cli  --model default --seed 1
+./bin/sreft report
+```
+
+These operate from an "on-call from my laptop" vantage (host shell + docker), which is distinct
+from the neutral harness's in-container operator shell — expected, and recorded in the harness
+column. They run autonomously (`--permission-mode bypassPermissions` / Codex's bypass flag), so
+run them only against a scenario you've stood up.
+
+**Neutral harness (OpenRouter).** `neutral-go` routes any model through OpenRouter's
+OpenAI-compatible API — every model runs the *identical* Go tool loop, the fairest cross-model
+comparison. Needs a key:
 
 ```sh
 export OPENROUTER_API_KEY=sk-or-...          # or put it in .env (gitignored)
-./bin/sreft run oom-killed --model anthropic/claude-sonnet-5 --seed 1
-./bin/sreft run oom-killed --model openai/gpt-5              --seed 1
-./bin/sreft run oom-killed --model google/gemini-2.5-pro    --seed 1
+./bin/sreft run oom-killed --harness neutral-go --model anthropic/claude-sonnet-5 --seed 1
 # ...≥3 seeds each, then:
 ./bin/sreft report --out docs/scorecard.md
 ```
