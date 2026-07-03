@@ -237,6 +237,39 @@ func TestGradeNeighborBlipNotPenalized(t *testing.T) {
 	}
 }
 
+// TestMatchRootCauseAlternatives covers the leniency that keeps correct
+// diagnoses from being under-credited: "|"-separated synonyms and word roots
+// that match inflections.
+func TestMatchRootCauseAlternatives(t *testing.T) {
+	keys := []string{
+		"connection pool",
+		"pool exhaust|pool starv", // root: matches "exhaustion"/"starved"
+		"postgres idle|database idle|near-idle",
+	}
+	cases := []struct {
+		name string
+		rc   string
+		want int
+	}{
+		{"exact", "connection pool exhausted; database idle", 3},
+		{"inflected+synonym", "the connection pool suffered exhaustion while Postgres was near-idle", 3},
+		{"starved+postgres-idle", "connection pool starved; postgres idle the whole time", 3},
+		{"partial", "the connection pool was the issue", 1},
+		{"none", "the disk filled up", 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, total := matchRootCause(&agentloop.Submission{RootCause: tc.rc}, keys)
+			if total != 3 {
+				t.Fatalf("total = %d, want 3", total)
+			}
+			if got != tc.want {
+				t.Errorf("matched = %d, want %d (rc=%q)", got, tc.want, tc.rc)
+			}
+		})
+	}
+}
+
 func contains(xs []string, want string) bool {
 	for _, x := range xs {
 		if x == want {

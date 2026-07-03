@@ -266,12 +266,15 @@ func streamEndTime(recs []observe.Record) time.Time {
 
 // --- diagnosis & awareness ---------------------------------------------------
 
-// matchRootCause counts how many answer-key phrases the submission covers. A key
-// matches when every word in it appears somewhere in the diagnosis/actions —
-// token-subset rather than exact-substring, so a correct RCA phrased as
-// "unbounded in-memory cache leak ... memory limit" still matches the keys
-// "unbounded cache" and "memory leak". This trades a little leniency for
-// robustness against the exact-match brittleness that plagues keyword grading.
+// matchRootCause counts how many answer-key concepts the submission covers.
+// Each key may list "|"-separated alternatives (synonyms/phrasings); the key
+// counts as matched if ANY alternative matches. An alternative matches when every
+// one of its words appears as a substring of the diagnosis/actions — so word
+// roots in a key ("exhaust") match inflections ("exhausted", "exhausting",
+// "exhaustion"), and alternatives cover synonyms ("postgres idle|database idle|
+// near-idle"). This is deliberately lenient to avoid the exact-match brittleness
+// that plagues keyword grading (a correct diagnosis phrased differently should
+// still score).
 func matchRootCause(sub *agentloop.Submission, keys []string) (matched, total int) {
 	total = len(keys)
 	if sub == nil || total == 0 {
@@ -279,8 +282,11 @@ func matchRootCause(sub *agentloop.Submission, keys []string) (matched, total in
 	}
 	hay := strings.ToLower(sub.RootCause + " " + sub.Actions)
 	for _, k := range keys {
-		if allWordsPresent(hay, strings.ToLower(k)) {
-			matched++
+		for _, alt := range strings.Split(k, "|") {
+			if allWordsPresent(hay, strings.ToLower(strings.TrimSpace(alt))) {
+				matched++
+				break
+			}
 		}
 	}
 	return matched, total
