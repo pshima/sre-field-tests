@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/fs"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -34,16 +37,35 @@ type composeService struct {
 }
 
 func (composeBootstrapper) Up(ctx context.Context, spec *scenario.Spec, tier scenario.InfraTier) (*Env, error) {
-	dir, err := tierDir(spec, tier)
+	if tier.Path == "" {
+		return nil, fmt.Errorf("tier for scenario %q has no path", spec.ID)
+	}
+	src, err := filepath.Abs(filepath.Join(scenarioRoot, spec.ID))
 	if err != nil {
 		return nil, err
 	}
+	// Isolate: bootstrap from a per-run copy of the scenario directory so an
+	// agent that operates host-side with docker access edits a throwaway
+	// workspace, never the committed repo. All compose metadata (working dir,
+	// build context) then points at the workspace, so even `docker inspect`
+	// won't lead the agent back to the repo. Removed on Down.
+	ws, err := os.MkdirTemp("", "sreft-"+spec.ID+"-")
+	if err != nil {
+		return nil, fmt.Errorf("create workspace: %w", err)
+	}
+	if err := copyDir(src, ws); err != nil {
+		_ = os.RemoveAll(ws)
+		return nil, fmt.Errorf("copy scenario to workspace: %w", err)
+	}
+	dir := filepath.Join(ws, tier.Path)
+
 	// Build and start detached. --build guarantees the SUT image reflects the
-	// committed app source; pinning that avoids a stale-image reproducibility trap.
+	// (copied) app source; pinning that avoids a stale-image reproducibility trap.
 	if out, err := composeRun(ctx, dir, nil, "up", "-d", "--build"); err != nil {
+		_ = os.RemoveAll(ws)
 		return nil, fmt.Errorf("compose up: %w: %s", err, out)
 	}
-	env := &Env{Tier: tier.Kind, Project: spec.ID, Endpoints: map[string]string{}}
+	env := &Env{Tier: tier.Kind, Project: spec.ID, Endpoints: map[string]string{}, workspace: ws}
 	if err := env.refresh(ctx, dir); err != nil {
 		return nil, err
 	}
@@ -60,10 +82,56 @@ func (composeBootstrapper) Down(ctx context.Context, env *Env) error {
 		return nil
 	}
 	// -v removes named/anonymous volumes so a re-run starts from a clean slate.
-	if out, err := composeRun(ctx, env.composeDir, nil, "down", "-v", "--remove-orphans"); err != nil {
+	out, err := composeRun(ctx, env.composeDir, nil, "down", "-v", "--remove-orphans")
+	// Always attempt to clean the throwaway workspace, even if down errored.
+	if env.workspace != "" {
+		_ = os.RemoveAll(env.workspace)
+	}
+	if err != nil {
 		return fmt.Errorf("compose down: %w: %s", err, out)
 	}
 	return nil
+}
+
+// copyDir recursively copies src into dst (which is created), preserving the
+// tree so relative build contexts in the compose file still resolve.
+func copyDir(src, dst string) error {
+	return filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(dst, rel)
+		if d.IsDir() {
+			return os.MkdirAll(target, 0o755)
+		}
+		return copyFile(path, target)
+	})
+}
+
+func copyFile(src, dst string) error {
+	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+		return err
+	}
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	info, err := in.Stat()
+	if err != nil {
+		return err
+	}
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, info.Mode())
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, in)
+	return err
 }
 
 // refresh populates the service->container map and health/service endpoints from
