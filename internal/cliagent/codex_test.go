@@ -31,11 +31,13 @@ for a in "$@"; do
   if [ "$prev" = "-o" ]; then outfile="$a"; fi
   prev="$a"
 done
-printf '%s\n' '{"id":"0","msg":{"type":"task_started"}}'
-printf '%s\n' '{"id":"1","msg":{"type":"exec_command_begin","command":["bash","-lc","docker inspect sreft-orders"]}}'
-printf '%s\n' '{"id":"2","msg":{"type":"exec_command_begin","command":["bash","-lc","docker compose up -d orders"]}}'
-printf '%s\n' '{"id":"3","msg":{"type":"agent_message","message":"unbounded cache leak caused OOM; set CACHE_MAX"}}'
-printf '%s\n' '{"id":"4","msg":{"type":"task_complete","last_agent_message":"unbounded cache leak caused OOM; set CACHE_MAX"}}'
+printf '%s\n' '{"type":"thread.started","thread_id":"t1"}'
+printf '%s\n' '{"type":"turn.started"}'
+printf '%s\n' '{"type":"item.started","item":{"type":"command_execution","command":"/bin/zsh -lc \"docker inspect sreft-orders\"","status":"in_progress"}}'
+printf '%s\n' '{"type":"item.completed","item":{"type":"command_execution","command":"/bin/zsh -lc \"docker inspect sreft-orders\"","exit_code":0,"status":"completed"}}'
+printf '%s\n' '{"type":"item.started","item":{"type":"command_execution","command":"/bin/zsh -lc \"docker compose up -d orders\"","status":"in_progress"}}'
+printf '%s\n' '{"type":"item.completed","item":{"type":"agent_message","text":"unbounded cache leak caused OOM; set CACHE_MAX"}}'
+printf '%s\n' '{"type":"turn.completed"}'
 if [ -n "$outfile" ]; then
   printf '%s' 'unbounded cache leak caused OOM; set CACHE_MAX and recreated orders' > "$outfile"
 fi
