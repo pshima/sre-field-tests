@@ -132,21 +132,23 @@ func parseCodexStream(r io.Reader, rawFile *os.File, tenc *json.Encoder) (finalT
 		switch ev.Msg.Type {
 		case "exec_command_begin":
 			if len(ev.Msg.Command) > 0 {
+				cmd := strings.Join(ev.Msg.Command, " ")
 				_ = tenc.Encode(agentloop.ToolCall{
-					TS:    time.Now(),
-					Tool:  "shell",
-					Input: map[string]any{"cmd": strings.Join(ev.Msg.Command, " ")},
+					TS: time.Now(), Tool: "shell", Input: map[string]any{"cmd": cmd},
 				})
+				progress("codex", "Bash", map[string]any{"command": cmd}, "")
 			}
 		case "agent_message":
 			iterations++
 			if ev.Msg.Message != "" {
 				finalText = ev.Msg.Message
+				progress("codex", "", nil, ev.Msg.Message)
 			}
 		case "task_complete":
 			if ev.Msg.LastAgentMessage != "" {
 				finalText = ev.Msg.LastAgentMessage
 			}
+			progress("codex", "", nil, "✓ done")
 		}
 	}
 	return finalText, iterations, sc.Err()
