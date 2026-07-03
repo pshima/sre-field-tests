@@ -47,6 +47,11 @@ func (c ClaudeCLI) Run(ctx context.Context, env *bootstrap.Env, cfg agentloop.Co
 	if _, err := exec.LookPath(c.bin()); err != nil {
 		return &agentloop.Result{Stopped: "error"}, fmt.Errorf("claude CLI not found (%q): %w", c.bin(), err)
 	}
+	// Absolute paths so --add-dir and the submission path resolve regardless of
+	// the CLI's working directory.
+	if abs, err := filepath.Abs(instanceDir); err == nil {
+		instanceDir = abs
+	}
 	if err := os.MkdirAll(instanceDir, 0o755); err != nil {
 		return nil, err
 	}
