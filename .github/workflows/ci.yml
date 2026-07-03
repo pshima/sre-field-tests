@@ -18,7 +18,13 @@ jobs:
         with:
           go-version: "1.26"
       - name: gofmt
-        run: test -z "$(gofmt -l -s .)" || (gofmt -l -s . && echo 'run: gofmt -w -s .' && exit 1)
+        run: |
+          unformatted="$(gofmt -l -s .)"
+          if [ -n "$unformatted" ]; then
+            echo "these files need gofmt -w -s:"
+            echo "$unformatted"
+            exit 1
+          fi
       - name: vet
         run: CGO_ENABLED=0 go vet ./...
       - name: build (static)
