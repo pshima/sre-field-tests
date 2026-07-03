@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -13,8 +14,11 @@ import (
 
 	"github.com/alecthomas/kong"
 
+	"github.com/pshima/sre-field-tests/internal/bootstrap"
+	_ "github.com/pshima/sre-field-tests/internal/inject" // register fault drivers
 	"github.com/pshima/sre-field-tests/internal/instance"
 	"github.com/pshima/sre-field-tests/internal/scenario"
+	"github.com/pshima/sre-field-tests/internal/selftest"
 )
 
 // version is stamped at build time via -ldflags; see the Makefile.
@@ -27,6 +31,7 @@ type CLI struct {
 	Verbose      bool   `kong:"short='v',help='Verbose logging.'"`
 
 	Up      UpCmd      `kong:"cmd,help='Bootstrap a scenario environment at a tier.'"`
+	Down    DownCmd    `kong:"cmd,help='Tear down a scenario environment.'"`
 	Inject  InjectCmd  `kong:"cmd,help='Inject the scenario fault into a running environment.'"`
 	Run     RunCmd     `kong:"cmd,help='Run an instance: an agent works the incident end-to-end.'"`
 	Score   ScoreCmd   `kong:"cmd,help='Grade a completed instance directory.'"`
@@ -61,11 +66,46 @@ func (cmd *UpCmd) Run(c *ctx) error {
 	if !ok {
 		return fmt.Errorf("scenario %q has no tier %q", spec.ID, cmd.Tier)
 	}
-	c.log.Info("bootstrap plan",
-		"scenario", spec.ID, "tier", cmd.Tier, "kind", tier.Kind, "path", tier.Path,
-		"fault", spec.Fault.Kind, "operator", spec.Task.OperatorService)
-	// M1 wires internal/bootstrap.For(tier.Kind).Up(...) here.
-	return notImplemented("bootstrap driver", "M1")
+	boot, err := bootstrap.For(tier.Kind)
+	if err != nil {
+		return err
+	}
+	c.log.Info("bootstrapping", "scenario", spec.ID, "tier", cmd.Tier, "kind", tier.Kind)
+	env, err := boot.Up(context.Background(), spec, tier)
+	if err != nil {
+		return err
+	}
+	c.log.Info("environment up",
+		"operator", env.OperatorContainer, "services", env.Services(), "endpoints", env.Endpoints)
+	fmt.Printf("Environment for %q is up.\n  operator shell: docker exec -it %s bash\n  down: sreft down %s\n",
+		spec.ID, env.OperatorContainer, spec.ID)
+	return nil
+}
+
+type DownCmd struct {
+	Scenario string `kong:"arg,help='Scenario ID.'"`
+	Tier     string `kong:"default='tier0-docker',help='Infra tier.'"`
+}
+
+func (cmd *DownCmd) Run(c *ctx) error {
+	spec, err := c.loadScenario(cmd.Scenario)
+	if err != nil {
+		return err
+	}
+	tier, ok := spec.Tiers[cmd.Tier]
+	if !ok {
+		return fmt.Errorf("scenario %q has no tier %q", spec.ID, cmd.Tier)
+	}
+	boot, err := bootstrap.For(tier.Kind)
+	if err != nil {
+		return err
+	}
+	dir, err := bootstrap.ResolveTierDir(spec, tier)
+	if err != nil {
+		return err
+	}
+	c.log.Info("tearing down", "scenario", spec.ID, "dir", dir)
+	return boot.Down(context.Background(), bootstrap.EnvForDir(dir))
 }
 
 type InjectCmd struct {
@@ -147,15 +187,38 @@ type VerifyCmd struct {
 }
 
 func (cmd *VerifyCmd) Run(c *ctx) error {
-	// Even before the self-test harness exists, verify that the spec loads and
-	// validates — the cheapest guard that a scenario is well-formed.
 	spec, err := c.loadScenario(cmd.Scenario)
 	if err != nil {
 		return err
 	}
-	c.log.Info("spec valid", "scenario", spec.ID, "title", spec.Title,
-		"references", len(spec.References), "safety_checks", len(spec.Rubric.SafetyViolations))
-	return notImplemented("scenario self-test (fault manifests / oracle=FULL / no-op=ZERO)", "M1")
+	// The oracle override lives at scenarios/<id>/oracle/fix.override.yaml.
+	oracle, err := filepath.Abs(filepath.Join(c.scenariosDir, spec.ID, "oracle", "fix.override.yaml"))
+	if err != nil {
+		return err
+	}
+	if _, err := os.Stat(oracle); err != nil {
+		oracle = "" // no oracle shipped; skip the recovery check
+	}
+	rep, err := selftest.Run(context.Background(), spec, cmd.Tier, selftest.Options{
+		OracleOverride: oracle,
+		Log:            c.log,
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Printf("\nSelf-test: %s (tier %s)\n", spec.ID, cmd.Tier)
+	for _, ck := range rep.Checks {
+		mark := "FAIL"
+		if ck.Pass {
+			mark = "PASS"
+		}
+		fmt.Printf("  [%s] %-20s %s\n", mark, ck.Name, ck.Detail)
+	}
+	if !rep.Passed {
+		return fmt.Errorf("self-test FAILED for %s", spec.ID)
+	}
+	fmt.Printf("  => scenario verified: fault manifests, no-op stays broken, oracle recovers\n")
+	return nil
 }
 
 type VersionCmd struct{}
@@ -183,6 +246,9 @@ func main() {
 		level = slog.LevelDebug
 	}
 	log := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
+
+	// Point the bootstrap drivers at the same scenarios directory the CLI uses.
+	bootstrap.SetScenarioRoot(cli.ScenariosDir)
 
 	appCtx := &ctx{log: log, scenariosDir: cli.ScenariosDir, resultsDir: cli.ResultsDir}
 	if err := kctx.Run(appCtx); err != nil {

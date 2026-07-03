@@ -1,0 +1,13 @@
+# Oracle fix for the oom-killed scenario: bound the leaking cache.
+#
+# This is the *correct* remediation — it addresses the leak itself rather than
+# masking it by raising the memory limit. Layered as a compose override over the
+# base file, it recreates `orders` with CACHE_MAX set, after which memory
+# stabilizes well under the 256Mi cap and the OOM cycle stops.
+#
+# The self-test applies this and asserts the grader would score FULL; a run with
+# no intervention leaves the base (leaking) config and must score ZERO.
+services:
+  orders:
+    environment:
+      CACHE_MAX: "64"

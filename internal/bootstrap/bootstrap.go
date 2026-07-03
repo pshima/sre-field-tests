@@ -22,9 +22,14 @@ type Env struct {
 	Project string
 	// OperatorContainer is the container ID/name the agent gets a shell in.
 	OperatorContainer string
-	// Endpoints maps logical names to reachable addresses (e.g. "health" ->
-	// "http://localhost:8080/healthz").
+	// Endpoints maps a compose service to a host-reachable base URL derived from
+	// its first published TCP port (e.g. "orders" -> "http://localhost:8080").
 	Endpoints map[string]string
+
+	// composeDir is the directory compose commands run in.
+	composeDir string
+	// services maps compose service name -> container name.
+	services map[string]string
 }
 
 // Bootstrapper stands up and tears down one infra tier for a scenario.

@@ -63,10 +63,18 @@ RESEARCH.md         foundational research (benchmarks, SRE, incidents, tooling)
 ```sh
 make build                       # static, CGO-free binaries in ./bin
 ./bin/sreft --help
-./bin/sreft verify oom-killed    # validates the scenario spec
-go test ./...
+./bin/sreft up oom-killed        # stand up the scenario stack (Docker)
+./bin/sreft verify oom-killed    # self-test: fault manifests, no-op stays broken, oracle recovers
+./bin/sreft down oom-killed      # tear it down
+go test ./...                    # unit tests (Docker self-test is opt-in: SREFT_DOCKER_IT=1)
 ```
 
-Status: **M0 (scaffolding & conventions) complete.** The fault/agent/grader drivers are being
-built across milestones M1–M3 — see the [Phase 1 milestone](https://github.com/pshima/sre-field-tests/milestone/1)
-and open issues. Work is tracked in GitHub Issues.
+`sreft verify oom-killed` bootstraps the stack, confirms the service is repeatedly OOM-killed
+under load, confirms it does not self-heal, applies the oracle fix (`CACHE_MAX`), and checks it
+stays healthy — then tears everything down. This is the guard that a scenario matches its
+description.
+
+Status: **M0 (scaffolding) and M1 (OOM environment: bootstrap + fault + observer + self-test)
+complete and validated on Docker.** Next: **M2** — the neutral OpenRouter agent loop and the
+state-based grader. See the [Phase 1 milestone](https://github.com/pshima/sre-field-tests/milestone/1).
+Work is tracked in GitHub Issues.
