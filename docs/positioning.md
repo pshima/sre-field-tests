@@ -52,4 +52,5 @@ is both the gap and the reason this can become a credible new "SRE score" row.
 - Held-out private split + canary GUID + scenario-refresh cadence (LiveBench) against contamination.
 - Cost/efficiency scoring ($/incident, tool-call efficiency).
 - The "monitoring depends on the failed thing" dimension (AWS/Slack/Datadog/Meta) — diagnose-while-blind.
-- Native-CLI harness adapters (Claude Code / Codex / Gemini) for "model + its own harness" columns.
+- Native-CLI harness adapters for "model + its own harness" columns — **Claude Code and Codex are
+  built and validated**; Gemini CLI is next.

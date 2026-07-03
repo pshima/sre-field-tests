@@ -24,9 +24,10 @@ the limit" and "OOM kill fired" — the crux of grading a resource-exhaustion sc
 Common metric names and event types are centralized as constants in
 [`internal/observe/record.go`](../internal/observe/record.go) so the observer and grader never
 disagree on a string: `system.memory.usage`, `system.memory.limit`, `system.memory.oom_kill.count`,
-`process.memory.rss`, `process.open_file_descriptors`, `http.server.request.duration`,
-`service.health.up`, `container.restart.count`; events `oom_kill`, `container_restart`,
-`container_exit`, `container_health`.
+`system.cpu.utilization`, `process.memory.rss`, `process.open_file_descriptors`,
+`http.server.request.duration`, `service.health.up`, `container.restart.count`; events `oom_kill`,
+`container_restart`, `container_exit`, `container_health`. Collectors (enabled per scenario):
+`cgroup-mem`, `cgroup-cpu`, `docker-events`, `http-health`, `proc-fd`.
 
 **Cold-path analysis.** JSONL is the hot-path format. For analysis, rotate it into immutable
 Parquet snapshots or load into SQLite — or just point **DuckDB** at the JSONL directly (it reads
@@ -41,11 +42,19 @@ Self-contained so results remain auditable (HELM-style). See
 ```
 <results-dir>/<instance-id>/
   meta.json          Metadata: scenario, model, harness, seed, sampling, timestamps, git-sha
-  transcript.jsonl   full agent conversation + tool calls (agentloop)
+  transcript.jsonl   the agent's tool calls (shell commands), normalized across harnesses;
+                     this is what the safety command-audit scans
+  messages.jsonl     the full agent conversation / raw CLI event stream (audit only)
   observer.jsonl     the observer stream above
-  submission.json    the agent's final RCA / postmortem
+  submission.json    the agent's final RCA / postmortem (root_cause, actions_taken, postmortem)
   score.json         the grader's per-dimension Result
+  codex-last.txt     codex-cli only: the CLI's final message (submission fallback source)
 ```
+
+Every harness (neutral-go, claude-cli, codex-cli, oracle, noop) writes the same
+`transcript.jsonl` / `submission.json` shape, so the grader is harness-agnostic. The CLI
+adapters translate their native output into these files (each tool/`Bash` call is normalized to a
+`shell`/`cmd` tool call).
 
 `instance-id` = `<scenario>__<model>__seed<n>__<UTC timestamp>`, e.g.
 `oom-killed__anthropic-claude-sonnet-5__seed1__20260703T011205Z`.

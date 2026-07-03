@@ -268,19 +268,25 @@ Scenarios are self-contained directories. To add one:
 
 ## Status & roadmap
 
-**The walking skeleton is complete and validated on Docker**, across two scenarios:
+**The pipeline is complete and validated on Docker** — the full skeleton (M0 scaffolding · M1
+scenario environment + self-test · M2 neutral agent loop + state-based grader · M3 scorecard
+aggregation) plus:
 
-- **M0** scaffolding & data-format conventions · **M1** scenario environment + self-test ·
-  **M2** neutral agent loop + state-based grader · **M3** scorecard aggregation.
+- **Three scenarios** across three failure classes (`oom-killed`, `cpu-regex`, `conn-pool`), each
+  with an oracle→FULL / no-op→ZERO gate.
+- **Real agents running** — the `claude-cli` and `codex-cli` harnesses drive the installed CLI
+  agents headlessly (no API key), and both scored FULL on `oom-killed`
+  ([docs/scorecard-v0.md](docs/scorecard-v0.md)).
 
 Next:
 
-- **Live model rows** (issue #5) — the pipeline is ready; it just needs `OPENROUTER_API_KEY`.
-- **More scenarios** — connection-pool exhaustion, TLS cert expiry, bad-deploy/rollback, disk-full,
-  deadlock, retry storm, … (prioritized in `RESEARCH.md`).
-- **Cloud / Terraform Tier-1**, native-CLI harness adapters (Claude Code / Codex / Gemini), a
-  deterministic-snapshot tier for model-card tables, a held-out split + canary, and a public
-  leaderboard.
+- **First multi-scenario, multi-agent scorecard** — run the CLI harnesses across all three
+  scenarios with several seeds each.
+- **Neutral OpenRouter rows** (issue #5) — the pipeline is ready; needs `OPENROUTER_API_KEY`.
+- **More scenarios** — TLS cert expiry, bad-deploy/rollback, disk-full, deadlock, retry storm, …
+  (prioritized in `RESEARCH.md`).
+- **Cloud / Terraform Tier-1**, a Gemini CLI adapter, a deterministic-snapshot tier for model-card
+  tables, a held-out split + canary, and a public leaderboard.
 
 Work is tracked in **GitHub Issues**; see the
 [Phase 1 milestone](https://github.com/pshima/sre-field-tests/milestone/1).
