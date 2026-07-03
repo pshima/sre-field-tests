@@ -1,0 +1,12 @@
+# Oracle fix for the conn-pool scenario: make the slow query fast.
+#
+# This is the *correct* remediation — it addresses the slow query that holds
+# pooled connections (the analog of adding a missing index / optimizing the
+# query), so connections cycle quickly and the pool recovers. It does NOT merely
+# enlarge the pool, which only raises the ceiling the load exhausts.
+#
+# Layered as a compose override, it recreates pool-svc with SLOW_QUERY_DISABLED=1.
+services:
+  pool-svc:
+    environment:
+      SLOW_QUERY_DISABLED: "1"
