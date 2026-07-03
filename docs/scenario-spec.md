@@ -71,6 +71,18 @@ labeled secondary metric. See [scoring.md](scoring.md).
 
 See [`scenarios/oom-killed/spec.yaml`](../scenarios/oom-killed/spec.yaml) for a complete worked example.
 
+## `oracle`
+
+The reference-solution answer, used by the `oracle` harness (the grader's FULL correctness gate).
+The fix itself is the compose override at `oracle/fix.override.yaml`; this is the matching
+diagnosis a correct responder would submit.
+
+| Field | Purpose |
+|---|---|
+| `oracle.submission.root_cause` | The correct root cause (should cover the `rubric.root_cause_key`). |
+| `oracle.submission.actions` | What the reference fix did. |
+| `oracle.submission.postmortem` | A short blameless postmortem. |
+
 ## Companion walkthrough (required)
 
 `spec.yaml` is the machine-readable definition. Every scenario **must** also ship a human-facing
