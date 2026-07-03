@@ -53,9 +53,11 @@ observer:
     - docker-events    # exit codes (137), OOMKilled flag, restart count
     - http-health      # /healthz success rate + latency histogram
     - proc-fd          # per-process fd count (cheap, useful cross-scenario)
+  # Logical name -> compose service to watch. Host-reachable health URLs are
+  # derived from the service's published port at run time.
   targets:
     orders: orders
-    health: "http://orders:8080/healthz"
+    payments: payments
 
 rubric:
   weights:

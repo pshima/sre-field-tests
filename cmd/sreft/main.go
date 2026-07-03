@@ -10,7 +10,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/alecthomas/kong"
 
@@ -18,6 +17,7 @@ import (
 	_ "github.com/pshima/sre-field-tests/internal/inject" // register fault drivers
 	"github.com/pshima/sre-field-tests/internal/instance"
 	"github.com/pshima/sre-field-tests/internal/scenario"
+	"github.com/pshima/sre-field-tests/internal/score"
 	"github.com/pshima/sre-field-tests/internal/selftest"
 )
 
@@ -123,11 +123,12 @@ func (cmd *InjectCmd) Run(c *ctx) error {
 
 type RunCmd struct {
 	Scenario    string  `kong:"arg,help='Scenario ID.'"`
-	Model       string  `kong:"required,help='OpenRouter model slug to route to.'"`
+	Model       string  `kong:"required,help='Model slug (OpenRouter) or a reference harness name.'"`
 	Seed        int     `kong:"default='1',help='Run seed (for reproducibility and pass^k grouping).'"`
 	Tier        string  `kong:"default='tier0-docker',help='Infra tier.'"`
 	Temperature float64 `kong:"default='0.0',help='Decoding temperature.'"`
-	Harness     string  `kong:"default='neutral-go',help='Agent harness identifier.'"`
+	Harness     string  `kong:"default='neutral-go',enum='neutral-go,oracle,noop',help='Agent harness: neutral-go (OpenRouter), oracle, or noop.'"`
+	Keep        bool    `kong:"help='Leave the environment running after the run (debugging).'"`
 }
 
 func (cmd *RunCmd) Run(c *ctx) error {
@@ -135,28 +136,7 @@ func (cmd *RunCmd) Run(c *ctx) error {
 	if err != nil {
 		return err
 	}
-	// Build the instance metadata now so the identity/plumbing is exercised
-	// even before the agent driver lands.
-	now := time.Now()
-	id := instance.NewID(spec.ID, cmd.Model, cmd.Seed, now)
-	meta := &instance.Metadata{
-		ID:             id,
-		Scenario:       spec.ID,
-		Tier:           cmd.Tier,
-		Model:          cmd.Model,
-		Harness:        cmd.Harness,
-		Seed:           cmd.Seed,
-		Sampling:       instance.Sampling{Temperature: cmd.Temperature},
-		StartedAt:      now,
-		HarnessVersion: version,
-	}
-	dir := instance.Dir(c.resultsDir, id)
-	if err := meta.Write(dir); err != nil {
-		return err
-	}
-	c.log.Info("instance created", "id", id, "dir", dir, "model", cmd.Model, "seed", cmd.Seed)
-	// M2 wires bootstrap -> observe -> inject -> agentloop -> score here.
-	return notImplemented("agent run pipeline", "M2")
+	return runInstance(c, spec, *cmd)
 }
 
 type ScoreCmd struct {
@@ -168,8 +148,19 @@ func (cmd *ScoreCmd) Run(c *ctx) error {
 	if err != nil {
 		return err
 	}
-	c.log.Info("scoring", "instance", meta.ID, "scenario", meta.Scenario, "model", meta.Model)
-	return notImplemented("grader", "M2")
+	spec, err := c.loadScenario(meta.Scenario)
+	if err != nil {
+		return err
+	}
+	res, err := score.NewStateGrader(spec, nil).Grade(cmd.InstanceDir, meta)
+	if err != nil {
+		return err
+	}
+	if err := res.Write(cmd.InstanceDir); err != nil {
+		return err
+	}
+	printScore(spec, res, cmd.InstanceDir)
+	return nil
 }
 
 type ReportCmd struct {

@@ -55,8 +55,8 @@ type Result struct {
 	Stopped    string // "submitted" | "max_iterations" | "wall_clock" | "error"
 }
 
-// Runner executes the agent loop against an environment, writing the transcript
-// (as JSONL) to transcriptPath.
+// Runner executes the agent loop against an environment, writing transcript,
+// messages, and submission artifacts into instanceDir.
 type Runner interface {
-	Run(ctx context.Context, env *bootstrap.Env, cfg Config, transcriptPath string) (*Result, error)
+	Run(ctx context.Context, env *bootstrap.Env, cfg Config, instanceDir string) (*Result, error)
 }
