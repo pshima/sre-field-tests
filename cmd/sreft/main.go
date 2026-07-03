@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -165,11 +166,38 @@ func (cmd *ScoreCmd) Run(c *ctx) error {
 
 type ReportCmd struct {
 	Format string `kong:"default='markdown',enum='markdown,json',help='Scorecard output format.'"`
+	Out    string `kong:"help='Write the scorecard to this file instead of stdout.'"`
 }
 
 func (cmd *ReportCmd) Run(c *ctx) error {
-	c.log.Info("report", "results", c.resultsDir, "format", cmd.Format)
-	return notImplemented("scorecard aggregation", "M3")
+	results, err := score.LoadResults(c.resultsDir)
+	if err != nil {
+		return fmt.Errorf("load results from %s: %w", c.resultsDir, err)
+	}
+	if len(results) == 0 {
+		return fmt.Errorf("no graded instances found in %s (run some first)", c.resultsDir)
+	}
+	aggs := score.AggregateResults(results)
+
+	var out string
+	if cmd.Format == "json" {
+		b, err := json.MarshalIndent(aggs, "", "  ")
+		if err != nil {
+			return err
+		}
+		out = string(b)
+	} else {
+		out = score.Scorecard(aggs)
+	}
+	if cmd.Out != "" {
+		if err := os.WriteFile(cmd.Out, []byte(out), 0o644); err != nil {
+			return err
+		}
+		c.log.Info("scorecard written", "path", cmd.Out, "groups", len(aggs), "instances", len(results))
+		return nil
+	}
+	fmt.Println(out)
+	return nil
 }
 
 type VerifyCmd struct {

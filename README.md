@@ -63,18 +63,23 @@ RESEARCH.md         foundational research (benchmarks, SRE, incidents, tooling)
 ```sh
 make build                       # static, CGO-free binaries in ./bin
 ./bin/sreft --help
-./bin/sreft up oom-killed        # stand up the scenario stack (Docker)
 ./bin/sreft verify oom-killed    # self-test: fault manifests, no-op stays broken, oracle recovers
-./bin/sreft down oom-killed      # tear it down
+./bin/sreft run oom-killed --model oracle --harness oracle   # full pipeline, no API key -> scores FULL
+./bin/sreft run oom-killed --model noop   --harness noop     # full pipeline, no API key -> scores ZERO
+./bin/sreft report               # aggregate graded instances into a scorecard
 go test ./...                    # unit tests (Docker self-test is opt-in: SREFT_DOCKER_IT=1)
 ```
 
-`sreft verify oom-killed` bootstraps the stack, confirms the service is repeatedly OOM-killed
-under load, confirms it does not self-heal, applies the oracle fix (`CACHE_MAX`), and checks it
-stays healthy — then tears everything down. This is the guard that a scenario matches its
-description.
+A run bootstraps the stack, starts the separate observer, injects the fault, drives the agent,
+observes for the sustain window, grades the recovered state, and tears down. The `oracle`/`noop`
+harnesses run the whole thing with **no API key** and are the grader's correctness gate
+(oracle → FULL, no-op → ZERO). Live model rows use `--model <openrouter-slug>` and need
+`OPENROUTER_API_KEY`.
 
-Status: **M0 (scaffolding) and M1 (OOM environment: bootstrap + fault + observer + self-test)
-complete and validated on Docker.** Next: **M2** — the neutral OpenRouter agent loop and the
-state-based grader. See the [Phase 1 milestone](https://github.com/pshima/sre-field-tests/milestone/1).
-Work is tracked in GitHub Issues.
+Status: **the walking skeleton is complete and validated on Docker** — M0 (scaffolding),
+M1 (OOM environment + self-test), M2 (neutral agent loop + state-based grader), M3 (aggregation
++ scorecard). The oracle scores 1.00 and the no-op 0.00 on a real observer stream
+([docs/scorecard-v0.md](docs/scorecard-v0.md)). The only piece gated on an API key is running
+**live models** (issue #5). See the
+[Phase 1 milestone](https://github.com/pshima/sre-field-tests/milestone/1); work is tracked in
+GitHub Issues.
