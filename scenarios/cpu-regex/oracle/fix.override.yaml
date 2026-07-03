@@ -1,0 +1,12 @@
+# Oracle fix for the cpu-regex scenario: roll back the vulnerable WAF rule.
+#
+# This is the *correct* remediation — it removes the catastrophic-backtracking
+# rule (the analog of Cloudflare's kill switch), so requests return instantly and
+# the worker pool is freed. It does NOT just throw more CPU at the problem, which
+# would only raise the ceiling the attacker exhausts.
+#
+# Layered as a compose override, it recreates regex-svc with WAF_RULE_DISABLED=1.
+services:
+  regex-svc:
+    environment:
+      WAF_RULE_DISABLED: "1"

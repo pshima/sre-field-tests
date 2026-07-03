@@ -1,0 +1,53 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: build / vet / unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - name: gofmt
+        run: |
+          unformatted="$(gofmt -l -s .)"
+          if [ -n "$unformatted" ]; then
+            echo "these files need gofmt -w -s:"
+            echo "$unformatted"
+            exit 1
+          fi
+      - name: vet
+        run: CGO_ENABLED=0 go vet ./...
+      - name: build (static)
+        run: make build
+      - name: unit tests
+        run: go test ./...
+
+  scenario-selftest:
+    name: scenario self-test (Docker)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: [oom-killed, cpu-regex]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - name: build
+        run: make build
+      # Ubuntu runners ship a working Docker daemon; verify the scenario matches
+      # its description end-to-end (fault manifests, no-op stays broken, oracle
+      # recovers).
+      - name: sreft verify ${{ matrix.scenario }}
+        run: ./bin/sreft verify ${{ matrix.scenario }}
