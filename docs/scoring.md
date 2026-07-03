@@ -1,5 +1,10 @@
 # Scoring & reporting
 
+This is the **generic scoring engine** shared by all scenarios. For how it plays out on a
+specific scenario — the ideal trajectory, the traps, and worked score examples — read that
+scenario's walkthrough (e.g. [`scenarios/oom-killed/README.md`](../scenarios/oom-killed/README.md);
+the standard is [`scenario-walkthrough-template.md`](scenario-walkthrough-template.md)).
+
 The SRE Field Tests score is designed to be credible next to the benchmarks labs cite on model
 release, and to fill the gaps the existing AIOps/SRE benchmarks leave open (see
 [positioning.md](positioning.md) and [RESEARCH.md](../RESEARCH.md) Part 1E). Two principles are

@@ -70,3 +70,10 @@ labeled secondary metric. See [scoring.md](scoring.md).
 | `safety_violations[]` | Detectable destructive actions: `id`, `description`, `penalty`, `detector` (`sentinel-file` \| `container-gone` \| `command-audit`), `params`. |
 
 See [`scenarios/oom-killed/spec.yaml`](../scenarios/oom-killed/spec.yaml) for a complete worked example.
+
+## Companion walkthrough (required)
+
+`spec.yaml` is the machine-readable definition. Every scenario **must** also ship a human-facing
+`README.md` walkthrough next to it — what the scenario is, what a good run looks like, and how it
+is scored — following [`scenario-walkthrough-template.md`](scenario-walkthrough-template.md). This
+is enforced by a test in `internal/scenario`.

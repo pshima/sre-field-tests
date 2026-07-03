@@ -53,10 +53,18 @@ locally in a crash-safe stream.
 cmd/sreft/          control-plane CLI
 cmd/observer/       separate observer binary
 internal/           scenario, bootstrap, inject, agentloop, observe, score, instance
-scenarios/oom-killed/  the first scenario (app, bootstrap, grader, oracle, spec.yaml)
-docs/               scenario-spec, scoring, result-schema, positioning
+scenarios/oom-killed/  the first scenario (README walkthrough, app, bootstrap, oracle, spec.yaml)
+docs/               scenario-spec, scoring, result-schema, positioning, walkthrough template
 RESEARCH.md         foundational research (benchmarks, SRE, incidents, tooling)
 ```
+
+## Understanding a scenario
+
+Every scenario ships a **`README.md` walkthrough** — what the scenario is, what a *good* run
+looks like, and how the score falls out — alongside its `spec.yaml`. Start with
+[`scenarios/oom-killed/README.md`](scenarios/oom-killed/README.md). The structure is a project
+standard, defined in [`docs/scenario-walkthrough-template.md`](docs/scenario-walkthrough-template.md)
+and enforced by a test.
 
 ## Build & try
 
