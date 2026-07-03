@@ -12,6 +12,7 @@ import (
 
 	"github.com/pshima/sre-field-tests/internal/agentloop"
 	"github.com/pshima/sre-field-tests/internal/bootstrap"
+	"github.com/pshima/sre-field-tests/internal/cliagent"
 	"github.com/pshima/sre-field-tests/internal/inject"
 	"github.com/pshima/sre-field-tests/internal/instance"
 	"github.com/pshima/sre-field-tests/internal/refrun"
@@ -150,6 +151,10 @@ func selectRunner(c *ctx, spec *scenario.Spec, o RunCmd) (agentloop.Runner, erro
 		}, nil
 	case "noop":
 		return refrun.Noop{}, nil
+	case "claude-cli":
+		return cliagent.ClaudeCLI{}, nil
+	case "codex-cli":
+		return cliagent.CodexCLI{}, nil
 	default: // neutral-go: the real model harness
 		client, err := agentloop.NewOpenRouterClient()
 		if err != nil {
