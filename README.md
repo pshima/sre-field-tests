@@ -171,20 +171,24 @@ Both are validated end-to-end on real Docker: oracle → **1.00 FULL**, no-op �
 ## Repository layout
 
 ```
-cmd/sreft/            control-plane CLI (up · down · inject · run · score · report · verify)
+cmd/sreft/            control-plane CLI (up · down · inject · run · bench · rescore · score · report · verify)
 cmd/observer/         separate observer binary
 internal/
   scenario/           spec schema + loader (and the walkthrough-enforcement test)
+  suite/              benchmark suite schema + run manifest
   bootstrap/          tiered infra (docker-compose today; terraform later)
-  inject/             fault drivers (cgroup-oom, cpu-regex)
+  inject/             fault drivers (cgroup-oom, cpu-regex, conn-pool)
   agentloop/          OpenRouter tool-use loop; shell/read/write/submit tools; transcript
+  cliagent/           installed-CLI harness adapters (claude-cli, codex-cli)
   observe/            Engine-API collectors + crash-safe JSONL writer/reader
   score/              state-based grader + scorecard aggregation
   selftest/           the `sreft verify` scenario self-test
   refrun/             oracle / no-op reference harnesses (keyless)
   instance/           instance metadata + results layout
 scenarios/<id>/       spec.yaml · README.md · app/ · bootstrap/ · oracle/
-docs/                 scenario-spec · scoring · result-schema · positioning · walkthrough template · scorecard-v0
+suites/               benchmark suite definitions (cli-sweep, smoke)
+runs/                 bench output: runs/<id>/ with manifest.json + instances + scorecard.md (gitignored)
+docs/                 scenario-spec · scoring · running-benchmarks · result-schema · positioning · walkthrough template
 RESEARCH.md           foundational research (benchmarks, SRE, incidents, tooling)
 ```
 
@@ -207,12 +211,22 @@ make build                                              # static, CGO-free binar
 # Aggregate all graded instances into a scorecard:
 ./bin/sreft report
 
+# Run a whole benchmark suite (matrix of scenarios × harnesses × seeds),
+# strictly one cell at a time, into a self-contained run directory:
+./bin/sreft bench suites/smoke.yaml            # keyless pipeline smoke test
+./bin/sreft bench suites/cli-sweep.yaml        # claude-cli + codex-cli × all scenarios
+./bin/sreft report  --run <run-id>             # scorecard for a run
+./bin/sreft rescore <run-id>                   # re-grade a run from saved artifacts (no re-run)
+
 # Poke at a live environment yourself:
 ./bin/sreft up oom-killed        # then: docker exec -it sreft-operator bash
 ./bin/sreft down oom-killed
 
 go test ./...                    # unit tests (the Docker self-test is opt-in: SREFT_DOCKER_IT=1)
 ```
+
+A **suite** ([`suites/`](suites)) declares the matrix; a **run** (`runs/<id>/`) is a reproducible
+artifact with a manifest + scorecard. See [`docs/running-benchmarks.md`](docs/running-benchmarks.md).
 
 ### Running real agents
 
@@ -299,6 +313,7 @@ Work is tracked in **GitHub Issues**; see the
 |---|---|
 | [`RESEARCH.md`](RESEARCH.md) | The foundational research the whole design rests on. |
 | [`docs/positioning.md`](docs/positioning.md) | How this compares to existing AIOps/SRE benchmarks, and the wedge. |
+| [`docs/running-benchmarks.md`](docs/running-benchmarks.md) | Suites, `sreft bench`/`rescore`/`report`, and run directories. |
 | [`docs/scoring.md`](docs/scoring.md) | The scoring engine: dimensions, composite, pass^k, the oracle/no-op gate. |
 | [`docs/scenario-spec.md`](docs/scenario-spec.md) | The `spec.yaml` schema. |
 | [`docs/scenario-walkthrough-template.md`](docs/scenario-walkthrough-template.md) | The required shape of every scenario walkthrough. |

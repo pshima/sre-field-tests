@@ -30,28 +30,47 @@ const sreSystemPrompt = `You are an experienced Site Reliability Engineer on cal
 	`destructive or unnecessary changes. When the service is restored, call submit with your ` +
 	`root cause, the actions you took, and a short blameless postmortem.`
 
-// runInstance executes one full instance and grades it.
-func runInstance(c *ctx, spec *scenario.Spec, o RunCmd) error {
-	tier, ok := spec.Tiers[o.Tier]
+// runParams is the resolved configuration for one instance run.
+type runParams struct {
+	Model       string
+	Harness     string
+	Tier        string
+	Seed        int
+	Temperature float64
+	Keep        bool
+	ResultsDir  string // directory the instance's results dir is created under
+}
+
+// runOneInstance runs a single instance with its own signal-cancelled context
+// (Ctrl-C stops the agent; deferred teardown still runs). Used by `sreft run`.
+func runOneInstance(c *ctx, spec *scenario.Spec, p runParams) (*score.Result, string, error) {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+	return runInstance(ctx, c, spec, p)
+}
+
+// runInstance executes one full instance and grades it, writing artifacts under
+// p.ResultsDir/<instance-id>. The caller owns ctx so both `sreft run` (one
+// instance) and `sreft bench` (a sweep with a single sweep-wide signal context)
+// can drive it. It returns the grade and the instance directory. A pipeline
+// error (bootstrap/inject/grade) is returned; an agent that errors or times out
+// still yields a graded (usually NONE) result rather than an error.
+func runInstance(ctx context.Context, c *ctx, spec *scenario.Spec, p runParams) (*score.Result, string, error) {
+	tier, ok := spec.Tiers[p.Tier]
 	if !ok {
-		return fmt.Errorf("scenario %q has no tier %q", spec.ID, o.Tier)
+		return nil, "", fmt.Errorf("scenario %q has no tier %q", spec.ID, p.Tier)
 	}
 	boot, err := bootstrap.For(tier.Kind)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
-	// Ctrl-C cancels the run gracefully: the agent stops and the deferred
-	// teardown still runs (a second Ctrl-C force-quits). Without this, an
-	// interrupt would leave the scenario stack running.
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
 
-	c.log.Info("bootstrapping", "scenario", spec.ID, "tier", o.Tier)
+	c.log.Info("bootstrapping", "scenario", spec.ID, "tier", p.Tier)
 	env, err := boot.Up(ctx, spec, tier)
 	if err != nil {
-		return fmt.Errorf("bootstrap: %w", err)
+		return nil, "", fmt.Errorf("bootstrap: %w", err)
 	}
-	if !o.Keep {
+	if !p.Keep {
 		defer func() {
 			dctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 			defer cancel()
@@ -61,29 +80,29 @@ func runInstance(c *ctx, spec *scenario.Spec, o RunCmd) error {
 
 	// Instance identity + directory.
 	now := time.Now()
-	id := instance.NewID(spec.ID, o.Model, o.Seed, now)
-	dir := instance.Dir(c.resultsDir, id)
+	id := instance.NewID(spec.ID, p.Model, p.Seed, now)
+	dir := instance.Dir(p.ResultsDir, id)
 	meta := &instance.Metadata{
-		ID: id, Scenario: spec.ID, Tier: o.Tier, Model: o.Model, Harness: o.Harness,
-		Seed: o.Seed, Sampling: instance.Sampling{Temperature: o.Temperature},
+		ID: id, Scenario: spec.ID, Tier: p.Tier, Model: p.Model, Harness: p.Harness,
+		Seed: p.Seed, Sampling: instance.Sampling{Temperature: p.Temperature},
 		StartedAt: now, HarnessVersion: version,
 	}
 	if err := meta.Write(dir); err != nil {
-		return err
+		return nil, dir, err
 	}
 
 	// Start the separate observer process (it must be a distinct program from
 	// whatever drives/experiences the fault).
 	obs, err := startObserver(spec, env, dir)
 	if err != nil {
-		return fmt.Errorf("start observer: %w", err)
+		return nil, dir, fmt.Errorf("start observer: %w", err)
 	}
 	defer obs.stop()
 
 	// Arm the fault and mark its start as the MTTR zero point.
 	if inj, err := inject.For(spec.Fault.Kind); err == nil {
 		if err := inj.Inject(ctx, env, spec.Fault); err != nil {
-			return fmt.Errorf("inject: %w", err)
+			return nil, dir, fmt.Errorf("inject: %w", err)
 		}
 	}
 	fs := time.Now()
@@ -91,12 +110,12 @@ func runInstance(c *ctx, spec *scenario.Spec, o RunCmd) error {
 	_ = meta.Write(dir)
 
 	// Select the agent harness and run the incident loop.
-	runner, err := selectRunner(c, spec, o)
+	runner, err := selectRunner(c, spec, p)
 	if err != nil {
-		return err
+		return nil, dir, err
 	}
 	cfg := agentloop.Config{
-		Model: o.Model, Temperature: o.Temperature,
+		Model: p.Model, Temperature: p.Temperature,
 		MaxIterations: spec.Task.MaxIterations,
 		WallClock:     time.Duration(spec.Task.WallClockSeconds) * time.Second,
 		SystemPrompt:  sreSystemPrompt, TaskPrompt: spec.Task.Prompt,
@@ -111,14 +130,14 @@ func runInstance(c *ctx, spec *scenario.Spec, o RunCmd) error {
 		agentCtx, cancelAgent = context.WithTimeout(ctx, cfg.WallClock)
 		defer cancelAgent()
 	}
-	c.log.Info("running agent", "harness", o.Harness, "model", o.Model, "instance", id,
+	c.log.Info("running agent", "harness", p.Harness, "model", p.Model, "instance", id,
 		"max_seconds", int(cfg.WallClock.Seconds()))
 	fmt.Printf("Agent working (harness=%s, budget=%ds). Live activity below; full log: %s\n",
-		o.Harness, int(cfg.WallClock.Seconds()), filepath.Join(dir, "messages.jsonl"))
-	res, err := runner.Run(agentCtx, env, cfg, dir)
+		p.Harness, int(cfg.WallClock.Seconds()), filepath.Join(dir, "messages.jsonl"))
+	res, rerr := runner.Run(agentCtx, env, cfg, dir)
 	switch {
-	case err != nil:
-		c.log.Warn("agent run error", "err", err, "stopped", stoppedOf(res))
+	case rerr != nil:
+		c.log.Warn("agent run error", "err", rerr, "stopped", stoppedOf(res))
 		meta.FailureMode = instance.FailureAgentError
 	case res != nil && res.Stopped == "wall_clock":
 		c.log.Warn("agent hit wall-clock budget", "seconds", int(cfg.WallClock.Seconds()))
@@ -137,23 +156,21 @@ func runInstance(c *ctx, spec *scenario.Spec, o RunCmd) error {
 	// Grade from the on-disk artifacts (state-based; no LLM judge without a key).
 	result, gerr := score.NewStateGrader(spec, nil).Grade(dir, meta)
 	if gerr != nil {
-		return fmt.Errorf("grade: %w", gerr)
+		return nil, dir, fmt.Errorf("grade: %w", gerr)
 	}
 	if err := result.Write(dir); err != nil {
-		return err
+		return nil, dir, err
 	}
 	fin := time.Now()
 	meta.FinishedAt = &fin
 	_ = meta.Write(dir)
-
-	printScore(spec, result, dir)
-	return nil
+	return result, dir, nil
 }
 
 // selectRunner picks the harness: the neutral OpenRouter loop, or a reference
 // runner (oracle/noop) that needs no API key.
-func selectRunner(c *ctx, spec *scenario.Spec, o RunCmd) (agentloop.Runner, error) {
-	switch o.Harness {
+func selectRunner(c *ctx, spec *scenario.Spec, p runParams) (agentloop.Runner, error) {
+	switch p.Harness {
 	case "oracle":
 		override, err := filepath.Abs(filepath.Join(c.scenariosDir, spec.ID, "oracle", "fix.override.yaml"))
 		if err != nil {
