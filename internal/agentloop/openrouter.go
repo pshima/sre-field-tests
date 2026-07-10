@@ -28,6 +28,49 @@ type ChatMessage struct {
 	ToolCalls  []ToolCallMsg `json:"tool_calls,omitempty"`
 	ToolCallID string        `json:"tool_call_id,omitempty"`
 	Name       string        `json:"name,omitempty"`
+	// Cache, when set, marks this message as a prompt-cache breakpoint: its
+	// content is serialized as a content-part array carrying cache_control, so
+	// OpenRouter/Anthropic cache everything up to and including it. The whole
+	// prior conversation prefix is then a cache read on the next turn — the
+	// single biggest cost lever for a loop that re-sends its growing history.
+	// Not serialized directly; see MarshalJSON.
+	Cache bool `json:"-"`
+}
+
+// cachePart is one OpenAI-style content part carrying an Anthropic cache_control
+// breakpoint. Content-as-array is valid OpenAI; providers that don't cache
+// simply ignore cache_control.
+type cachePart struct {
+	Type         string        `json:"type"` // "text"
+	Text         string        `json:"text"`
+	CacheControl *cacheControl `json:"cache_control,omitempty"`
+}
+
+type cacheControl struct {
+	Type string `json:"type"` // "ephemeral"
+}
+
+// MarshalJSON emits string content normally, but when Cache is set (and there is
+// content) emits a single-element content-part array with a cache_control
+// breakpoint. Response decoding is unaffected (default unmarshal into Content).
+func (m ChatMessage) MarshalJSON() ([]byte, error) {
+	if m.Cache && m.Content != "" {
+		return json.Marshal(struct {
+			Role       string        `json:"role"`
+			Content    []cachePart   `json:"content"`
+			ToolCalls  []ToolCallMsg `json:"tool_calls,omitempty"`
+			ToolCallID string        `json:"tool_call_id,omitempty"`
+			Name       string        `json:"name,omitempty"`
+		}{
+			Role:       m.Role,
+			Content:    []cachePart{{Type: "text", Text: m.Content, CacheControl: &cacheControl{Type: "ephemeral"}}},
+			ToolCalls:  m.ToolCalls,
+			ToolCallID: m.ToolCallID,
+			Name:       m.Name,
+		})
+	}
+	type wire ChatMessage // no MarshalJSON method -> no recursion
+	return json.Marshal(wire(m))
 }
 
 type ToolCallMsg struct {
@@ -124,10 +167,13 @@ func (c *OpenRouterClient) Complete(ctx context.Context, req ChatRequest) (ChatR
 			FinishReason string      `json:"finish_reason"`
 		} `json:"choices"`
 		Usage *struct {
-			PromptTokens     int     `json:"prompt_tokens"`
-			CompletionTokens int     `json:"completion_tokens"`
-			TotalTokens      int     `json:"total_tokens"`
-			Cost             float64 `json:"cost"`
+			PromptTokens        int     `json:"prompt_tokens"`
+			CompletionTokens    int     `json:"completion_tokens"`
+			TotalTokens         int     `json:"total_tokens"`
+			Cost                float64 `json:"cost"`
+			PromptTokensDetails *struct {
+				CachedTokens int `json:"cached_tokens"`
+			} `json:"prompt_tokens_details"`
 		} `json:"usage"`
 		Error *struct {
 			Message string `json:"message"`
@@ -149,6 +195,9 @@ func (c *OpenRouterClient) Complete(ctx context.Context, req ChatRequest) (ChatR
 			CompletionTokens: u.CompletionTokens,
 			TotalTokens:      u.TotalTokens,
 			CostUSD:          u.Cost,
+		}
+		if u.PromptTokensDetails != nil {
+			out.Usage.CachedTokens = u.PromptTokensDetails.CachedTokens
 		}
 	}
 	return out, nil
