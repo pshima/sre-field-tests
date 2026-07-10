@@ -1,0 +1,20 @@
+# Subscription models via their native CLI harnesses — these run against the
+# local Claude and Codex subscriptions, so they cost NOTHING on OpenRouter.
+#   sreft bench suites/subscription.yaml && sreft report --run <id>
+#
+# claude-cli -> Claude (Claude subscription), codex-cli -> GPT (Codex subscription).
+# Every scenario, 3 seeds each, for pass^k reliability.
+name: subscription
+description: Claude and Codex via their native CLIs (no OpenRouter cost).
+tier: tier0-docker
+seeds: 3
+scenarios:
+  - oom-killed
+  - cpu-regex
+  - conn-pool
+  - bad-deploy
+  - retry-storm
+  - false-alarm
+matrix:
+  - { harness: claude-cli, model: default }
+  - { harness: codex-cli,  model: default }
