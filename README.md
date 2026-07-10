@@ -24,9 +24,12 @@ incident, can this model actually diagnose and fix it — quickly, and without m
 That question matters as agents move from writing code to running systems, and it's under-served:
 
 - **The prior art is narrow.** IBM ITBench, Microsoft AIOpsLab, SREGym, RCAEval, OpenRCA and
-  friends are almost all **cloud/Kubernetes-heavy**, **RCA-focused** (name the cause, don't fix
-  it), reuse the same handful of demo apps, and are **silent on safety** — none meaningfully
-  penalize destructive remediation or acting when nothing is wrong.
+  friends are almost all **cloud/Kubernetes-heavy** and stop at **naming the cause** over a frozen
+  snapshot — the system isn't running, so nothing is actually fixed. We drop the agent into a
+  **live** broken stack and grade the **restored state** (the failing check now passes and *stays*
+  passing under load). They also reuse the same handful of demo apps and are **silent on safety** —
+  none meaningfully penalize destructive remediation, masking-not-fixing, or **acting when nothing
+  is wrong** (a live system is what makes those scorable at all).
 - **Benchmarks are gamed by omission.** Most report a single pass@1 with no error bars, no
   reliability metric, and an undisclosed harness — and a scaffold can move an agentic score 10–20
   points without changing the model.
