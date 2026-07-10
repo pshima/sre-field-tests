@@ -1,0 +1,15 @@
+# Oracle fix for the retry-storm scenario: bound the dependency call.
+#
+# This is the *correct* remediation — cap the retry budget and add a tight client
+# timeout so a slow dependency can no longer hold a worker. web then fails fast
+# and sheds load, staying healthy under a degraded dependency (graceful
+# degradation). It does NOT add workers or scale web (which only amplifies the
+# storm against the already-degraded dependency), and it does NOT touch the
+# dependency or the neighbor.
+#
+# Layered as a compose override, it recreates web with RETRY_STORM_DISABLED=1
+# (which caps MAX_RETRIES to 0 and tightens the per-attempt timeout).
+services:
+  web:
+    environment:
+      RETRY_STORM_DISABLED: "1"

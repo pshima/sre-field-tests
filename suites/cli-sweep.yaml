@@ -11,6 +11,7 @@ scenarios:
   - cpu-regex
   - conn-pool
   - bad-deploy
+  - retry-storm
 matrix:
   - { harness: claude-cli, model: default }
   - { harness: codex-cli,  model: default }
