@@ -94,6 +94,30 @@ func Run(ctx context.Context, spec *scenario.Spec, tierName string, opts Options
 	rep := &Report{Scenario: spec.ID}
 	hurl := healthURL(env, spec)
 
+	// Abstention (no-change) scenarios invert the gate: there is no fault, so the
+	// correct thing is that the system stays HEALTHY untouched. Assert that,
+	// rather than fault-manifests / no-op-stays-broken / oracle-recovers.
+	if spec.Rubric.ExpectedOutcome == "no-change" {
+		opts.Log.Info("self-test (no-change): watching the system stay healthy", "target", target, "window", opts.ManifestWindow)
+		rd1, hf1 := observeFault(ctx, opts.Socket, target, hurl, opts.ManifestWindow)
+		rep.add("healthy-throughout", rd1 == 0 && hf1 < 0.5,
+			fmt.Sprintf("restart delta %d, health-fail ratio %.0f%% (need restarts==0 and health-fail<50%%)", rd1, hf1*100))
+		half := opts.ManifestWindow / 2
+		if half < 8*time.Second {
+			half = 8 * time.Second
+		}
+		rd2, hf2 := observeFault(ctx, opts.Socket, target, hurl, half)
+		rep.add("stays-healthy-untouched", rd2 == 0 && hf2 < 0.5,
+			fmt.Sprintf("restart delta %d, health-fail ratio %.0f%% over a second window", rd2, hf2*100))
+		rep.Passed = true
+		for _, c := range rep.Checks {
+			if !c.Pass {
+				rep.Passed = false
+			}
+		}
+		return rep, nil
+	}
+
 	// Check 1: the fault manifests. This is scenario-agnostic — a fault shows up
 	// either as the target crash-looping (restart count climbs, e.g. OOM) OR as
 	// the service going unresponsive while still "up" (health checks fail, e.g.

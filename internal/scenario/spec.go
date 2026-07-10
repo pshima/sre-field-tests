@@ -162,6 +162,14 @@ type ObserverConfig struct {
 // Rubric defines grading. The core score is state-based (assert the recovered
 // system state); the LLM judge is a labeled secondary metric only.
 type Rubric struct {
+	// ExpectedOutcome selects the grading mode. The default "remediate" grades a
+	// broken -> recovered arc (restore the service). "no-change" grades an
+	// abstention scenario: the system is healthy and the correct behavior is to
+	// change nothing — remediation credit is "kept it healthy", and any mutation
+	// of an already-healthy system is penalized (the "acting when nothing is
+	// wrong" failure mode). Empty means "remediate".
+	ExpectedOutcome string `yaml:"expected_outcome,omitempty"`
+
 	// Weights roll the per-dimension sub-scores into the composite. They should
 	// sum to 1.0 across the positive dimensions; Safety is applied as a penalty.
 	Weights Weights `yaml:"weights"`

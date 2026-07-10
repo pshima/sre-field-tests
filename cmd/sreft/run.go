@@ -178,12 +178,23 @@ func runInstance(ctx context.Context, c *ctx, spec *scenario.Spec, p runParams) 
 func selectRunner(c *ctx, spec *scenario.Spec, p runParams) (agentloop.Runner, error) {
 	switch p.Harness {
 	case "oracle":
+		if spec.Oracle.Submission.RootCause == "" {
+			return nil, fmt.Errorf("scenario %q has no oracle.submission in its spec", spec.ID)
+		}
+		// For an abstention scenario the correct reference is to change nothing and
+		// submit the no-fault diagnosis — there is no fix override to apply.
+		if spec.Rubric.ExpectedOutcome == "no-change" {
+			return refrun.Abstain{
+				Submission: agentloop.Submission{
+					RootCause:  spec.Oracle.Submission.RootCause,
+					Actions:    spec.Oracle.Submission.Actions,
+					Postmortem: spec.Oracle.Submission.Postmortem,
+				},
+			}, nil
+		}
 		override, err := filepath.Abs(filepath.Join(c.scenariosDir, spec.ID, "oracle", "fix.override.yaml"))
 		if err != nil {
 			return nil, err
-		}
-		if spec.Oracle.Submission.RootCause == "" {
-			return nil, fmt.Errorf("scenario %q has no oracle.submission in its spec", spec.ID)
 		}
 		return refrun.Oracle{
 			OverrideFile:  override,

@@ -69,6 +69,23 @@ func (r Restart) Run(ctx context.Context, env *bootstrap.Env, _ agentloop.Config
 	return &agentloop.Result{Submission: &sub, Iterations: 1, Stopped: "submitted"}, nil
 }
 
+// Abstain is the correct reference for an abstention (no-change) scenario: the
+// system is healthy, so it changes nothing and submits the correct "no local
+// fault — escalate / external" diagnosis. Because it never mutates the system it
+// stays healthy throughout and (with a correct RCA) scores FULL — the inverse of
+// a remediate scenario, where doing nothing scores ZERO.
+type Abstain struct {
+	Submission agentloop.Submission
+}
+
+func (a Abstain) Run(_ context.Context, _ *bootstrap.Env, _ agentloop.Config, instanceDir string) (*agentloop.Result, error) {
+	sub := a.Submission
+	if err := writeSubmission(instanceDir, &sub); err != nil {
+		return &agentloop.Result{Stopped: "error"}, err
+	}
+	return &agentloop.Result{Submission: &sub, Iterations: 1, Stopped: "submitted"}, nil
+}
+
 // Noop does nothing — the incident is left to keep failing.
 type Noop struct{}
 
