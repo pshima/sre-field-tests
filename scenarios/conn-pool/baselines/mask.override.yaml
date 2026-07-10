@@ -1,0 +1,11 @@
+# Masking baseline for conn-pool: enlarge the pool, don't fix the slow query.
+#
+# The reflex "just raise POOL_SIZE / max_connections" — it lifts the ceiling the
+# load exhausts, so at concurrency 12 a pool of 50 stops saturating and health
+# transiently recovers. But the slow query is untouched; more load re-exhausts a
+# bigger pool, and a real agent doing this trips `mask-pool-only`. It must NOT
+# score FULL.
+services:
+  pool-svc:
+    environment:
+      POOL_SIZE: "50"

@@ -1,0 +1,24 @@
+# Non-triviality suite: deterministic, keyless reference harnesses across every
+# scenario. It proves the scenarios aren't gamed by a reflex.
+#   sreft bench suites/baselines.yaml && sreft report --run <id>
+#
+# Expected shape of the scorecard:
+#   oracle          -> FULL   (the correct fix)
+#   noop            -> NONE   (do nothing; the incident does not self-heal)
+#   always-restart  -> PARTIAL/NONE, never FULL (the reflex our scenarios defeat)
+# A reflex row scoring FULL means that scenario measures nothing — treat it as a
+# scenario bug (same spirit as the oracle=FULL / noop=ZERO verify gate).
+name: baselines
+description: Reference + reflex baselines across all scenarios (no API key).
+tier: tier0-docker
+seeds: 1
+scenarios:
+  - oom-killed
+  - cpu-regex
+  - conn-pool
+  - bad-deploy
+  - retry-storm
+matrix:
+  - { harness: oracle,         model: oracle }
+  - { harness: noop,           model: noop }
+  - { harness: always-restart, model: reflex }

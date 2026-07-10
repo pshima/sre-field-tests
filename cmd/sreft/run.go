@@ -190,6 +190,38 @@ func selectRunner(c *ctx, spec *scenario.Spec, p runParams) (agentloop.Runner, e
 		}, nil
 	case "noop":
 		return refrun.Noop{}, nil
+	case "always-restart":
+		// The universal reflex: bounce the service. A weak, generic submission
+		// (no real root cause) so diagnosis scores low — this is a policy, not
+		// an analysis.
+		return refrun.Restart{
+			TargetService: spec.Fault.Target,
+			Submission: agentloop.Submission{
+				RootCause:  "The service was unhealthy, so I restarted it.",
+				Actions:    "Restarted the affected service (docker compose restart).",
+				Postmortem: "Bounced the service to clear the immediate symptom.",
+			},
+		}, nil
+	case "mask":
+		// A masking baseline: apply the scenario's baselines/mask.override.yaml
+		// (raise the limit / enlarge the pool / add workers). Scenarios that ship
+		// no mask override do not support this harness.
+		override, err := filepath.Abs(filepath.Join(c.scenariosDir, spec.ID, "baselines", "mask.override.yaml"))
+		if err != nil {
+			return nil, err
+		}
+		if _, err := os.Stat(override); err != nil {
+			return nil, fmt.Errorf("scenario %q ships no baselines/mask.override.yaml (mask baseline unavailable)", spec.ID)
+		}
+		return refrun.Mask{
+			OverrideFile:  override,
+			TargetService: spec.Fault.Target,
+			Submission: agentloop.Submission{
+				RootCause:  "The service was under-resourced, so I gave it more headroom.",
+				Actions:    "Raised the resource ceiling / capacity for the affected service.",
+				Postmortem: "Added capacity to absorb the load.",
+			},
+		}, nil
 	case "claude-cli":
 		return cliagent.ClaudeCLI{}, nil
 	case "codex-cli":

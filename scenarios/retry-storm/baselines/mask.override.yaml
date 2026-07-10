@@ -1,0 +1,11 @@
+# Masking baseline for retry-storm: add workers, don't bound the retries.
+#
+# The reflex "just scale up / add capacity" — with WORKERS=64 the 16 loaders can
+# no longer saturate the pool, so /healthz transiently recovers. But the retry
+# amplification against the degraded dependency is untouched (in fact more
+# workers hammer it harder), and a real agent doing this trips
+# `mask-scale-or-restart-only`. It must NOT score FULL.
+services:
+  web:
+    environment:
+      WORKERS: "64"

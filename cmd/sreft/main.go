@@ -130,7 +130,7 @@ type RunCmd struct {
 	Seed        int     `kong:"default='1',help='Run seed (for reproducibility and pass^k grouping).'"`
 	Tier        string  `kong:"default='tier0-docker',help='Infra tier.'"`
 	Temperature float64 `kong:"default='0.0',help='Decoding temperature.'"`
-	Harness     string  `kong:"default='neutral-go',enum='neutral-go,oracle,noop,claude-cli,codex-cli',help='Agent harness: neutral-go (OpenRouter), claude-cli, codex-cli, oracle, or noop.'"`
+	Harness     string  `kong:"default='neutral-go',enum='neutral-go,oracle,noop,always-restart,mask,claude-cli,codex-cli',help='Agent harness: neutral-go (OpenRouter), claude-cli, codex-cli, oracle, noop, or a reflex baseline (always-restart, mask).'"`
 	Keep        bool    `kong:"help='Leave the environment running after the run (debugging).'"`
 }
 
