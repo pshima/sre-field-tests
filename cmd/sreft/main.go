@@ -287,6 +287,9 @@ func main() {
 	}
 	log := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
 
+	// Make a locally-dropped API key available (gitignored .env / OPENROUTER_KEY).
+	loadLocalSecrets(log)
+
 	// Point the bootstrap drivers at the same scenarios directory the CLI uses.
 	bootstrap.SetScenarioRoot(cli.ScenariosDir)
 
