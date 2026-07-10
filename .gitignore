@@ -32,6 +32,11 @@ go.work.sum
 # env file
 .env
 
+# secrets / API keys — never commit these
+/OPENROUTER_KEY
+*.key
+*.secret
+
 # Editor/IDE
 # .idea/
 # .vscode/
