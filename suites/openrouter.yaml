@@ -1,0 +1,27 @@
+# Frontier models we have NO subscription for, via the neutral-go OpenRouter
+# harness. Deliberately excludes Claude and GPT — those run on our plan
+# (suites/subscription.yaml) so they don't spend OpenRouter budget.
+#   source the key (OPENROUTER_KEY is auto-loaded), then:
+#   sreft bench suites/openrouter.yaml && sreft report --run <id>
+#
+# One flagship per lab: Google, xAI, DeepSeek, Moonshot, Qwen, Zhipu. Prompt
+# caching (Anthropic-style) is applied by the harness; providers that don't cache
+# simply pay full input price, so cost per model varies.
+name: openrouter
+description: Frontier non-Claude/non-GPT flagships via OpenRouter (neutral-go).
+tier: tier0-docker
+seeds: 2
+scenarios:
+  - oom-killed
+  - cpu-regex
+  - conn-pool
+  - bad-deploy
+  - retry-storm
+  - false-alarm
+matrix:
+  - { harness: neutral-go, model: google/gemini-3.1-pro-preview }
+  - { harness: neutral-go, model: x-ai/grok-4.5 }
+  - { harness: neutral-go, model: deepseek/deepseek-v4-pro }
+  - { harness: neutral-go, model: moonshotai/kimi-k2.6 }
+  - { harness: neutral-go, model: qwen/qwen3.7-max }
+  - { harness: neutral-go, model: z-ai/glm-4.5 }
