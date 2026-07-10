@@ -21,11 +21,23 @@ in [RESEARCH.md](../RESEARCH.md) Part 1E; this is the summary.
 Nearly all of them are:
 
 - **Cloud / Kubernetes-heavy** — require a cluster; nothing is laptop-runnable.
-- **RCA-focused, remediation-light** — score *naming* the cause; only a few test *fixing* it, and
-  scores there are the lowest in the field.
+- **Cause-naming, not system-restoring** — they end at *naming* the cause (which element, which
+  change) and most grade it over a **frozen snapshot**: the system under test isn't running, so
+  nothing is actually fixed and no post-fix state exists to assert. A handful execute a fix, and
+  their scores are the lowest in the field. We stand up a **live** failing stack and grade the
+  **recovered state** — the failing check now passes and *stays* passing under load — not a named
+  answer.
+- **Artifact attribution, not mechanism diagnosis** — attributing a failure to an artifact in a
+  static bundle (the guilty log line, span, or commit) is a different skill from reasoning about
+  *what class of failure* a running system is exhibiting and why. We test the latter, on live
+  behavior.
 - **Reusing the same 4 demo apps** — Online Boutique / Sock Shop / Train Ticket / DeathStarBench.
-- **Silent on safety** — almost none penalize destructive remediation, unnecessary change, or
-  acting when nothing is wrong.
+- **Silent on safety, and blind to abstention** — almost none penalize destructive remediation or
+  masking-not-fixing, and none score **abstention: knowing when *not* to act**. Because our system
+  is live, a destructive remediation is *detectable and penalizable* (a static bundle can't be
+  damaged); and a dedicated no-fault scenario scores whether an agent correctly changes **nothing**
+  when nothing is actually broken — the "acting when nothing is wrong" failure mode, made
+  first-class.
 - **Rarely time- or cost-scored** — only ITBench-AA and AIOpsLab surface TTM / $-per-task.
 
 ## Our wedge
@@ -34,11 +46,17 @@ SRE Field Tests targets the intersection nobody occupies:
 
 1. **Local-first / laptop-accessible.** Scenarios run in plain Docker (fault primitives are
    cgroups + stress-ng + tc/netem — no cluster). Cloud/Terraform tiers are optional, not required.
-2. **Real remediation + MTTR**, state-verified — not just RCA identification.
-3. **A genuine safety / blast-radius penalty**, including decoy "nothing is wrong" scenarios —
-   the biggest open gap in the prior art.
-4. **pass^k reliability + real error bars**, which even the model-card benchmarks skip.
-5. **Full harness disclosure + retained transcripts** (HELM model), on a neutral leaderboard —
+2. **Real remediation + MTTR**, state-verified on a live system — the fix must actually hold under
+   load — not RCA identification over a frozen snapshot.
+3. **A genuine safety composite** — destructive-action / blast-radius penalties *and* an
+   unnecessary-change penalty, including a no-fault scenario where the correct move is to **abstain**.
+   Knowing when not to act is the biggest open gap in the prior art, and only a live system can score it.
+4. **Non-triviality by construction.** Deterministic non-LLM baselines (the reflexes an agent is
+   tempted by — "just restart it", "just scale it") are run through the same grader and must *not*
+   pass; a scenario a one-line policy solves measures nothing.
+5. **pass^k reliability + real error bars**, plus **tokens and $-per-incident**, so the leaderboard
+   shows a cost-vs-quality frontier, not a single self-reported pass@1.
+6. **Full harness disclosure + retained transcripts** (HELM model), on a neutral leaderboard —
    avoiding the "99/100 self-reported" problem.
 
 No existing benchmark combines AIOpsLab's lifecycle + ITBench's strict scoring + a genuine
