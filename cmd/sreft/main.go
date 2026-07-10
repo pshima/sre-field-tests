@@ -35,6 +35,8 @@ type CLI struct {
 	Down    DownCmd    `kong:"cmd,help='Tear down a scenario environment.'"`
 	Inject  InjectCmd  `kong:"cmd,help='Inject the scenario fault into a running environment.'"`
 	Run     RunCmd     `kong:"cmd,help='Run an instance: an agent works the incident end-to-end.'"`
+	Bench   BenchCmd   `kong:"cmd,help='Run a suite (a matrix of scenarios × harnesses × seeds) into a run directory.'"`
+	Rescore RescoreCmd `kong:"cmd,help='Re-grade a run from its saved artifacts (no agent re-runs).'"`
 	Score   ScoreCmd   `kong:"cmd,help='Grade a completed instance directory.'"`
 	Report  ReportCmd  `kong:"cmd,help='Aggregate instances into a scorecard.'"`
 	Verify  VerifyCmd  `kong:"cmd,help='Self-test a scenario (fault manifests; oracle=FULL; no-op=ZERO).'"`
@@ -137,7 +139,16 @@ func (cmd *RunCmd) Run(c *ctx) error {
 	if err != nil {
 		return err
 	}
-	return runInstance(c, spec, *cmd)
+	p := runParams{
+		Model: cmd.Model, Harness: cmd.Harness, Tier: cmd.Tier, Seed: cmd.Seed,
+		Temperature: cmd.Temperature, Keep: cmd.Keep, ResultsDir: c.resultsDir,
+	}
+	result, dir, err := runOneInstance(c, spec, p)
+	if err != nil {
+		return err
+	}
+	printScore(spec, result, dir)
+	return nil
 }
 
 type ScoreCmd struct {
@@ -165,17 +176,23 @@ func (cmd *ScoreCmd) Run(c *ctx) error {
 }
 
 type ReportCmd struct {
-	Format string `kong:"default='markdown',enum='markdown,json',help='Scorecard output format.'"`
-	Out    string `kong:"help='Write the scorecard to this file instead of stdout.'"`
+	RunID   string `kong:"name='run',help='Report on a run id/directory under runs/ instead of the results dir.'"`
+	RunsDir string `kong:"default='runs',help='Parent directory for run outputs.'"`
+	Format  string `kong:"default='markdown',enum='markdown,json',help='Scorecard output format.'"`
+	Out     string `kong:"help='Write the scorecard to this file instead of stdout.'"`
 }
 
 func (cmd *ReportCmd) Run(c *ctx) error {
-	results, err := score.LoadResults(c.resultsDir)
+	resultsRoot := c.resultsDir
+	if cmd.RunID != "" {
+		resultsRoot = resolveRunDir(cmd.RunsDir, cmd.RunID)
+	}
+	results, err := score.LoadResults(resultsRoot)
 	if err != nil {
-		return fmt.Errorf("load results from %s: %w", c.resultsDir, err)
+		return fmt.Errorf("load results from %s: %w", resultsRoot, err)
 	}
 	if len(results) == 0 {
-		return fmt.Errorf("no graded instances found in %s (run some first)", c.resultsDir)
+		return fmt.Errorf("no graded instances found in %s (run some first)", resultsRoot)
 	}
 	aggs := score.AggregateResults(results)
 

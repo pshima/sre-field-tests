@@ -1,0 +1,15 @@
+# The default benchmark: the installed CLI agents across every scenario.
+# Run with:  sreft bench suites/cli-sweep.yaml
+#
+# Expands to scenarios × matrix × seeds cells, run strictly one at a time.
+name: cli-sweep
+description: Claude Code and Codex across all scenarios.
+tier: tier0-docker
+seeds: 3
+scenarios:
+  - oom-killed
+  - cpu-regex
+  - conn-pool
+matrix:
+  - { harness: claude-cli, model: default }
+  - { harness: codex-cli,  model: default }

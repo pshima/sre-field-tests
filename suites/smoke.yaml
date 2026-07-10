@@ -1,0 +1,13 @@
+# A fast, keyless smoke test of the whole bench pipeline: the reference harnesses
+# (no subscription, no API key) on one scenario. Use it to check that `sreft
+# bench` runs, tears down between cells, and produces a run + scorecard.
+#   sreft bench suites/smoke.yaml
+name: smoke
+description: Reference-harness smoke test of the bench pipeline (no API key).
+tier: tier0-docker
+seeds: 1
+scenarios:
+  - oom-killed
+matrix:
+  - { harness: oracle, model: oracle }
+  - { harness: noop,   model: noop }
