@@ -12,6 +12,7 @@ scenarios:
   - conn-pool
   - bad-deploy
   - retry-storm
+  - false-alarm
 matrix:
   - { harness: claude-cli, model: default }
   - { harness: codex-cli,  model: default }

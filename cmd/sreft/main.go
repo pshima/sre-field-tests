@@ -253,7 +253,11 @@ func (cmd *VerifyCmd) Run(c *ctx) error {
 	if !rep.Passed {
 		return fmt.Errorf("self-test FAILED for %s", spec.ID)
 	}
-	fmt.Printf("  => scenario verified: fault manifests, no-op stays broken, oracle recovers\n")
+	summary := "fault manifests, no-op stays broken, oracle recovers"
+	if spec.Rubric.ExpectedOutcome == "no-change" {
+		summary = "no fault to inject; the healthy system stays healthy untouched (abstention)"
+	}
+	fmt.Printf("  => scenario verified: %s\n", summary)
 	return nil
 }
 
