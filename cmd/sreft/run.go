@@ -153,6 +153,12 @@ func runInstance(ctx context.Context, c *ctx, spec *scenario.Spec, p runParams) 
 	sleepCtx(ctx, sustain)
 	obs.stop() // flush the stream before grading
 
+	// Record the run's resource cost (tokens + $) when the harness reports it.
+	if res != nil && res.Usage.TotalTokens > 0 {
+		u := res.Usage
+		meta.Usage = &u
+	}
+
 	// Grade from the on-disk artifacts (state-based; no LLM judge without a key).
 	result, gerr := score.NewStateGrader(spec, nil).Grade(dir, meta)
 	if gerr != nil {

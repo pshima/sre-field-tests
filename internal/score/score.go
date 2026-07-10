@@ -85,4 +85,10 @@ type Aggregate struct {
 	// MTTRMedianSeconds over resolved instances (median, not mean: incident
 	// durations are heavy-tailed, per the VOID).
 	MTTRMedianSeconds *float64 `json:"mttr_median_seconds,omitempty"`
+
+	// TokensMean and CostUSDMean are the mean resource cost per instance, over
+	// the instances in the group that reported usage (0 when none did, e.g. the
+	// keyless reference/reflex baselines).
+	TokensMean  float64 `json:"tokens_mean"`
+	CostUSDMean float64 `json:"cost_usd_mean"`
 }

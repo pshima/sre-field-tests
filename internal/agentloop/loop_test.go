@@ -94,6 +94,30 @@ func TestLoopRunsToolsThenSubmits(t *testing.T) {
 	}
 }
 
+// TestLoopAccumulatesUsage checks the loop sums per-turn token + $ usage and
+// reports it on the Result, and that it opts into usage accounting on the wire.
+func TestLoopAccumulatesUsage(t *testing.T) {
+	withUsage := func(r ChatResponse, u instance.Usage) ChatResponse { r.Usage = u; return r }
+	client := &scriptedClient{responses: []ChatResponse{
+		withUsage(toolCallResp("1", "shell", `{"cmd":"ls"}`), instance.Usage{PromptTokens: 100, CompletionTokens: 20, TotalTokens: 120, CostUSD: 0.001}),
+		withUsage(toolCallResp("2", "submit", `{"root_cause":"x","actions_taken":"y","postmortem":"z"}`), instance.Usage{PromptTokens: 200, CompletionTokens: 30, TotalTokens: 230, CostUSD: 0.002}),
+	}}
+	loop := &Loop{Client: client, Exec: &fakeExec{}}
+	res, err := loop.Run(context.Background(), &bootstrap.Env{}, Config{Model: "test/model", MaxIterations: 10}, t.TempDir())
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if res.Usage.TotalTokens != 350 || res.Usage.PromptTokens != 300 || res.Usage.CompletionTokens != 50 {
+		t.Errorf("usage tokens = %+v, want prompt=300 completion=50 total=350", res.Usage)
+	}
+	if res.Usage.CostUSD < 0.0029 || res.Usage.CostUSD > 0.0031 {
+		t.Errorf("usage cost = %v, want ~0.003", res.Usage.CostUSD)
+	}
+	if len(client.seen) == 0 || client.seen[0].Usage == nil || !client.seen[0].Usage.Include {
+		t.Errorf("loop did not request usage accounting (usage.include)")
+	}
+}
+
 // TestLoopStopsAtMaxIterations ensures a model that never submits is bounded.
 func TestLoopStopsAtMaxIterations(t *testing.T) {
 	client := &scriptedClient{responses: []ChatResponse{

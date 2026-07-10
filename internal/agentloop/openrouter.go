@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/pshima/sre-field-tests/internal/instance"
 )
 
 // ChatClient is the minimal chat-completions surface the loop needs. It is an
@@ -56,11 +58,23 @@ type ChatRequest struct {
 	Tools       []ToolDef     `json:"tools,omitempty"`
 	Temperature float64       `json:"temperature"`
 	TopP        float64       `json:"top_p,omitempty"`
+	// Usage opts into OpenRouter's usage accounting so the response carries token
+	// counts and the run's dollar cost.
+	Usage *UsageAccounting `json:"usage,omitempty"`
+}
+
+// UsageAccounting is OpenRouter's request-side flag to include usage (and cost)
+// in the response.
+type UsageAccounting struct {
+	Include bool `json:"include"`
 }
 
 type ChatResponse struct {
 	Message      ChatMessage
 	FinishReason string
+	// Usage is the token + $ cost of this completion (zero if the provider
+	// didn't report it).
+	Usage instance.Usage
 }
 
 // OpenRouterClient calls OpenRouter's OpenAI-compatible chat-completions API.
@@ -109,6 +123,12 @@ func (c *OpenRouterClient) Complete(ctx context.Context, req ChatRequest) (ChatR
 			Message      ChatMessage `json:"message"`
 			FinishReason string      `json:"finish_reason"`
 		} `json:"choices"`
+		Usage *struct {
+			PromptTokens     int     `json:"prompt_tokens"`
+			CompletionTokens int     `json:"completion_tokens"`
+			TotalTokens      int     `json:"total_tokens"`
+			Cost             float64 `json:"cost"`
+		} `json:"usage"`
 		Error *struct {
 			Message string `json:"message"`
 		} `json:"error"`
@@ -122,5 +142,14 @@ func (c *OpenRouterClient) Complete(ctx context.Context, req ChatRequest) (ChatR
 	if len(parsed.Choices) == 0 {
 		return ChatResponse{}, fmt.Errorf("openrouter returned no choices (HTTP %d)", resp.StatusCode)
 	}
-	return ChatResponse{Message: parsed.Choices[0].Message, FinishReason: parsed.Choices[0].FinishReason}, nil
+	out := ChatResponse{Message: parsed.Choices[0].Message, FinishReason: parsed.Choices[0].FinishReason}
+	if u := parsed.Usage; u != nil {
+		out.Usage = instance.Usage{
+			PromptTokens:     u.PromptTokens,
+			CompletionTokens: u.CompletionTokens,
+			TotalTokens:      u.TotalTokens,
+			CostUSD:          u.Cost,
+		}
+	}
+	return out, nil
 }

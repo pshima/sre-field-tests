@@ -59,17 +59,23 @@ func (l *Loop) Run(ctx context.Context, env *bootstrap.Env, cfg Config, instance
 	}
 	tools := toolDefs()
 
+	// usage accumulates token + $ cost across every turn, so it is reported on
+	// whichever exit path the loop takes.
+	var usage instance.Usage
+
 	for i := 0; i < maxIter; i++ {
 		if !deadline.IsZero() && time.Now().After(deadline) {
-			return &Result{Iterations: i, Stopped: "wall_clock"}, nil
+			return &Result{Iterations: i, Stopped: "wall_clock", Usage: usage}, nil
 		}
 		resp, err := l.Client.Complete(ctx, ChatRequest{
 			Model: cfg.Model, Messages: msgs, Tools: tools,
 			Temperature: cfg.Temperature, TopP: cfg.TopP,
+			Usage: &UsageAccounting{Include: true},
 		})
 		if err != nil {
-			return &Result{Iterations: i, Stopped: "error"}, err
+			return &Result{Iterations: i, Stopped: "error", Usage: usage}, err
 		}
+		usage.Add(resp.Usage)
 		asst := resp.Message
 		asst.Role = "assistant"
 		msgs = append(msgs, asst)
@@ -90,13 +96,13 @@ func (l *Loop) Run(ctx context.Context, env *bootstrap.Env, cfg Config, instance
 			msgs = append(msgs, ChatMessage{Role: "tool", ToolCallID: tc.ID, Name: tc.Function.Name, Content: toolResultContent(out, terr)})
 			if done {
 				if werr := writeSubmission(instanceDir, sub); werr != nil {
-					return &Result{Submission: sub, Iterations: i + 1, Stopped: "submitted"}, werr
+					return &Result{Submission: sub, Iterations: i + 1, Stopped: "submitted", Usage: usage}, werr
 				}
-				return &Result{Submission: sub, Iterations: i + 1, Stopped: "submitted"}, nil
+				return &Result{Submission: sub, Iterations: i + 1, Stopped: "submitted", Usage: usage}, nil
 			}
 		}
 	}
-	return &Result{Iterations: maxIter, Stopped: "max_iterations"}, nil
+	return &Result{Iterations: maxIter, Stopped: "max_iterations", Usage: usage}, nil
 }
 
 // dispatch executes one tool call, returning its textual output, an optional

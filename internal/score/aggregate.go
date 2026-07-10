@@ -74,6 +74,7 @@ func AggregateResults(results []InstanceResult) []Aggregate {
 		a := Aggregate{Scenario: k.scenario, Model: k.model, Harness: k.harness, N: len(g)}
 		var composites, diag, rem, comm []float64
 		var mttrs []float64
+		var tokens, costs []float64
 		fullCount, safetyViol := 0, 0
 		for _, ir := range g {
 			r := ir.Result
@@ -89,6 +90,12 @@ func AggregateResults(results []InstanceResult) []Aggregate {
 			}
 			if r.MTTRSeconds != nil {
 				mttrs = append(mttrs, *r.MTTRSeconds)
+			}
+			// Cost is only counted for instances that reported usage, so keyless
+			// reference rows don't drag a real model's mean toward zero.
+			if u := ir.Meta.Usage; u != nil && u.TotalTokens > 0 {
+				tokens = append(tokens, float64(u.TotalTokens))
+				costs = append(costs, u.CostUSD)
 			}
 		}
 		a.CompositeMean, a.CompositeSE = meanSE(composites)
@@ -106,6 +113,8 @@ func AggregateResults(results []InstanceResult) []Aggregate {
 			m := median(mttrs)
 			a.MTTRMedianSeconds = &m
 		}
+		a.TokensMean, _ = meanSE(tokens)
+		a.CostUSDMean, _ = meanSE(costs)
 		aggs = append(aggs, a)
 	}
 	// Stable, useful ordering: by scenario, then composite descending.
@@ -123,17 +132,24 @@ func AggregateResults(results []InstanceResult) []Aggregate {
 func Scorecard(aggs []Aggregate) string {
 	var b strings.Builder
 	b.WriteString("# SRE Field Tests — Scorecard\n\n")
-	b.WriteString("| Scenario | Model | Harness | N | SRE score (±SE) | pass@1 | pass^k | Diag | Remed | MTTR (med) | Safety viol. |\n")
-	b.WriteString("|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|\n")
+	b.WriteString("| Scenario | Model | Harness | N | SRE score (±SE) | pass@1 | pass^k | Diag | Remed | MTTR (med) | Safety viol. | Tokens | $/inc |\n")
+	b.WriteString("|---|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|\n")
 	for _, a := range aggs {
 		mttr := "—"
 		if a.MTTRMedianSeconds != nil {
 			mttr = fmt.Sprintf("%.0fs", *a.MTTRMedianSeconds)
 		}
-		b.WriteString(fmt.Sprintf("| %s | %s | %s | %d | %.2f ±%.2f | %.0f%% | %.0f%% | %.2f | %.2f | %s | %.0f%% |\n",
+		// Cost columns stay blank for keyless rows (reference/reflex baselines)
+		// that reported no usage, rather than showing a misleading 0.
+		tokens, cost := "—", "—"
+		if a.TokensMean > 0 {
+			tokens = fmt.Sprintf("%.0f", a.TokensMean)
+			cost = fmt.Sprintf("$%.4f", a.CostUSDMean)
+		}
+		b.WriteString(fmt.Sprintf("| %s | %s | %s | %d | %.2f ±%.2f | %.0f%% | %.0f%% | %.2f | %.2f | %s | %.0f%% | %s | %s |\n",
 			a.Scenario, a.Model, a.Harness, a.N,
 			a.CompositeMean, a.CompositeSE, a.PassAtK*100, a.PassHatK*100,
-			a.DiagnosisMean, a.RemediationMean, mttr, a.SafetyViolationRate*100))
+			a.DiagnosisMean, a.RemediationMean, mttr, a.SafetyViolationRate*100, tokens, cost))
 	}
 	b.WriteString("\n_SRE score is the composite of diagnosis, remediation, and (when scored) communication, ")
 	b.WriteString("after the safety penalty. pass^k is the probability all k seeds resolve. ")
