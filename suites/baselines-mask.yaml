@@ -1,0 +1,20 @@
+# Masking-baseline suite: the "just throw resources at it" reflex on the three
+# resource-exhaustion scenarios that ship a baselines/mask.override.yaml.
+#   sreft bench suites/baselines-mask.yaml && sreft report --run <id>
+#
+# The mask baseline raises the ceiling (memory / pool size / worker count) without
+# addressing the root cause. Where masking transiently restores health it earns
+# remediation credit but weak diagnosis -> PARTIAL, never FULL. oracle/noop are
+# included as the FULL/NONE reference points for contrast.
+name: baselines-mask
+description: Masking reflex vs the correct fix on the resource-exhaustion scenarios.
+tier: tier0-docker
+seeds: 1
+scenarios:
+  - oom-killed
+  - conn-pool
+  - retry-storm
+matrix:
+  - { harness: oracle, model: oracle }
+  - { harness: noop,   model: noop }
+  - { harness: mask,   model: reflex }

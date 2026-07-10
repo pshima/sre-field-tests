@@ -68,6 +68,10 @@ Every scenario ships an **oracle** (reference solution) and a **no-op** check. C
 This is the guard against grader gaming/brittleness and the reason SWE-bench needed its Verified
 subset — an ungated grader silently rewards or rejects the wrong things.
 
+Beyond the two gates, deterministic **reflex baselines** ("just restart it", "just add capacity")
+are run through the same grader and must *not* score FULL — a scenario a one-line policy solves
+measures nothing. See [baselines.md](baselines.md).
+
 ## Disclosure
 
 A "SRE number is uninterpretable without the scaffold." We publish the harness (loop, tools,
