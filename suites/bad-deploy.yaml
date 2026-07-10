@@ -1,0 +1,11 @@
+# Focused suite: the installed CLI agents on the new bad-deploy scenario.
+#   sreft bench suites/bad-deploy.yaml
+name: bad-deploy
+description: Claude Code and Codex on the bad-deploy (rollback) scenario.
+tier: tier0-docker
+seeds: 1
+scenarios:
+  - bad-deploy
+matrix:
+  - { harness: claude-cli, model: default }
+  - { harness: codex-cli,  model: default }

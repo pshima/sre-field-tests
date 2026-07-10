@@ -1,0 +1,11 @@
+# Oracle fix for the bad-deploy scenario: roll back to the previous good release.
+#
+# This is the *correct* remediation — reverting the change that caused the
+# incident. It does NOT restart or scale the broken v2 release (which would only
+# spread the regression); it rolls back to v1.
+#
+# Layered as a compose override, it recreates web on RELEASE=v1.
+services:
+  web:
+    environment:
+      RELEASE: "v1"

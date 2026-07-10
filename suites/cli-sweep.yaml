@@ -10,6 +10,7 @@ scenarios:
   - oom-killed
   - cpu-regex
   - conn-pool
+  - bad-deploy
 matrix:
   - { harness: claude-cli, model: default }
   - { harness: codex-cli,  model: default }

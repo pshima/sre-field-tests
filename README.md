@@ -163,6 +163,7 @@ by a test** (a scenario can't merge without its walkthrough).
 | **`oom-killed`** | Memory leak → cgroup OOM (exit 137) crash loop | GKE OOM patterns | [walkthrough](scenarios/oom-killed/README.md) |
 | **`cpu-regex`** | Catastrophic regex backtracking (ReDoS) → CPU + worker-pool exhaustion | Cloudflare 2019, Stack Overflow 2016 | [walkthrough](scenarios/cpu-regex/README.md) |
 | **`conn-pool`** | Slow queries hold every pooled DB connection → pool exhaustion (DB idle) | Postgres pool-timeout outages | [walkthrough](scenarios/conn-pool/README.md) |
+| **`bad-deploy`** | A broken release (v2) fails health; the fix is to roll back, not tune | Change-to-a-live-system (~70% of outages), Knight Capital 2012 | [walkthrough](scenarios/bad-deploy/README.md) |
 
 Both are validated end-to-end on real Docker: oracle → **1.00 FULL**, no-op → **0.00 NONE**.
 
