@@ -67,6 +67,7 @@ func (l *Loop) Run(ctx context.Context, env *bootstrap.Env, cfg Config, instance
 		if !deadline.IsZero() && time.Now().After(deadline) {
 			return &Result{Iterations: i, Stopped: "wall_clock", Usage: usage}, nil
 		}
+		cacheBreakpoints(msgs)
 		resp, err := l.Client.Complete(ctx, ChatRequest{
 			Model: cfg.Model, Messages: msgs, Tools: tools,
 			Temperature: cfg.Temperature, TopP: cfg.TopP,
@@ -103,6 +104,29 @@ func (l *Loop) Run(ctx context.Context, env *bootstrap.Env, cfg Config, instance
 		}
 	}
 	return &Result{Iterations: maxIter, Stopped: "max_iterations", Usage: usage}, nil
+}
+
+// cacheBreakpoints places prompt-cache breakpoints on the message history: one
+// on the system prompt (the stable prefix, alongside the tool definitions) and a
+// moving one on the most recent content-bearing message. Because the history is
+// append-only and byte-stable, the whole prior prefix is a cache read on the next
+// turn — the dominant cost lever for a loop that re-sends its growing context.
+// Two breakpoints, well within Anthropic's limit of four. Providers/models that
+// don't support caching ignore the annotation.
+func cacheBreakpoints(msgs []ChatMessage) {
+	for i := range msgs {
+		msgs[i].Cache = false
+	}
+	if len(msgs) == 0 {
+		return
+	}
+	msgs[0].Cache = true // system prompt (+ tools render into the same prefix)
+	for i := len(msgs) - 1; i >= 0; i-- {
+		if msgs[i].Content != "" { // skip assistant tool-call turns (empty content)
+			msgs[i].Cache = true
+			break
+		}
+	}
 }
 
 // dispatch executes one tool call, returning its textual output, an optional

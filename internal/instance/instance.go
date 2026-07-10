@@ -71,6 +71,10 @@ type Usage struct {
 	PromptTokens     int `json:"prompt_tokens"`
 	CompletionTokens int `json:"completion_tokens"`
 	TotalTokens      int `json:"total_tokens"`
+	// CachedTokens is the portion of PromptTokens served from the prompt cache
+	// (a cache read, billed at a fraction of the input price). It surfaces how
+	// effective prompt caching was for the run; 0 when the provider reports none.
+	CachedTokens int `json:"cached_tokens,omitempty"`
 	// CostUSD is the run's dollar cost when the provider reports it (OpenRouter
 	// returns it when usage accounting is requested); 0 when unknown.
 	CostUSD float64 `json:"cost_usd,omitempty"`
@@ -81,6 +85,7 @@ func (u *Usage) Add(o Usage) {
 	u.PromptTokens += o.PromptTokens
 	u.CompletionTokens += o.CompletionTokens
 	u.TotalTokens += o.TotalTokens
+	u.CachedTokens += o.CachedTokens
 	u.CostUSD += o.CostUSD
 }
 
