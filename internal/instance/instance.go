@@ -58,6 +58,30 @@ type Metadata struct {
 
 	// HarnessVersion / observer + tooling versions for full disclosure.
 	HarnessVersion string `json:"harness_version,omitempty"`
+
+	// Usage records the resource cost of the run (tokens + $), so the scorecard
+	// can show a cost-vs-quality frontier. Nil for harnesses that report none
+	// (reference/reflex baselines; CLI adapters until they surface native usage).
+	Usage *Usage `json:"usage,omitempty"`
+}
+
+// Usage is the token + dollar cost of one run. It is the canonical shape both the
+// agent loop (as a run result) and the persisted metadata use.
+type Usage struct {
+	PromptTokens     int `json:"prompt_tokens"`
+	CompletionTokens int `json:"completion_tokens"`
+	TotalTokens      int `json:"total_tokens"`
+	// CostUSD is the run's dollar cost when the provider reports it (OpenRouter
+	// returns it when usage accounting is requested); 0 when unknown.
+	CostUSD float64 `json:"cost_usd,omitempty"`
+}
+
+// Add accumulates another usage reading into u (used to total across turns).
+func (u *Usage) Add(o Usage) {
+	u.PromptTokens += o.PromptTokens
+	u.CompletionTokens += o.CompletionTokens
+	u.TotalTokens += o.TotalTokens
+	u.CostUSD += o.CostUSD
 }
 
 // Sampling captures decoding parameters for reproducibility.

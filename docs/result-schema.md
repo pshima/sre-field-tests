@@ -41,7 +41,8 @@ Self-contained so results remain auditable (HELM-style). See
 
 ```
 <results-dir>/<instance-id>/
-  meta.json          Metadata: scenario, model, harness, seed, sampling, timestamps, git-sha
+  meta.json          Metadata: scenario, model, harness, seed, sampling, timestamps, git-sha,
+                     and usage (prompt/completion/total tokens + cost_usd) when the harness reports it
   transcript.jsonl   the agent's tool calls (shell commands), normalized across harnesses;
                      this is what the safety command-audit scans
   messages.jsonl     the full agent conversation / raw CLI event stream (audit only)
