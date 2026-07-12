@@ -133,6 +133,57 @@ func TestLoopStopsAtMaxIterations(t *testing.T) {
 	}
 }
 
+// TestLoopForcedSubmitRescuesDiagnosis covers the glm/gemini case: a model that
+// never calls submit on its own still gets a final forced-submit turn, so its
+// diagnosis is captured instead of scoring zero for want of the tool call.
+func TestLoopForcedSubmitRescuesDiagnosis(t *testing.T) {
+	client := &scriptedClient{responses: []ChatResponse{
+		toolCallResp("1", "shell", `{"cmd":"docker ps"}`),
+		toolCallResp("2", "shell", `{"cmd":"docker logs web"}`),
+		toolCallResp("3", "submit", `{"root_cause":"bad deploy v2 regression","actions_taken":"rolled back to v1","postmortem":"gate deploys on health"}`),
+	}}
+	loop := &Loop{Client: client, Exec: &fakeExec{}}
+	res, err := loop.Run(context.Background(), &bootstrap.Env{OperatorContainer: "op"}, Config{MaxIterations: 2}, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Stopped != "max_iterations+forced_submit" {
+		t.Errorf("stopped=%q, want max_iterations+forced_submit", res.Stopped)
+	}
+	if res.Submission == nil || !strings.Contains(res.Submission.RootCause, "bad deploy") {
+		t.Fatalf("forced submit did not capture the RCA: %+v", res.Submission)
+	}
+	// The forced turn must offer only the submit tool (and not a forced
+	// tool_choice, which some providers reject).
+	last := client.seen[len(client.seen)-1]
+	if len(last.Tools) != 1 || last.Tools[0].Function.Name != "submit" {
+		t.Errorf("final turn should offer submit-only tools, got %v", last.Tools)
+	}
+	if last.ToolChoice != nil {
+		t.Errorf("final turn must not force tool_choice (Z.AI rejects it), got %v", last.ToolChoice)
+	}
+}
+
+// TestLoopForcedSubmitFallsBackToProse covers a model that ignores the forced
+// tool_choice and answers in prose — its final message becomes the root cause.
+func TestLoopForcedSubmitFallsBackToProse(t *testing.T) {
+	client := &scriptedClient{responses: []ChatResponse{
+		toolCallResp("1", "shell", `{"cmd":"ls"}`),
+		{Message: ChatMessage{Role: "assistant", Content: "The pool was exhausted by slow queries."}},
+	}}
+	loop := &Loop{Client: client, Exec: &fakeExec{}}
+	res, err := loop.Run(context.Background(), &bootstrap.Env{OperatorContainer: "op"}, Config{MaxIterations: 1}, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Submission == nil || !strings.Contains(res.Submission.RootCause, "pool was exhausted") {
+		t.Fatalf("prose fallback did not capture the RCA: %+v", res.Submission)
+	}
+	if res.Stopped != "max_iterations+final_text" {
+		t.Errorf("stopped=%q, want max_iterations+final_text", res.Stopped)
+	}
+}
+
 func countLines(s string) int {
 	n := 0
 	for _, l := range strings.Split(s, "\n") {
