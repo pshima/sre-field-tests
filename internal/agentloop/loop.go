@@ -63,9 +63,61 @@ func (l *Loop) Run(ctx context.Context, env *bootstrap.Env, cfg Config, instance
 	// whichever exit path the loop takes.
 	var usage instance.Usage
 
+	// finalize handles the exit paths that end WITHOUT a voluntary submission
+	// (ran out of turns or wall-clock). Some models never call submit on their
+	// own — they keep investigating until the budget is gone — which would leave
+	// their diagnosis ungraded. One last forced turn ("submit now") captures a
+	// root cause from whatever they found, so the diagnosis dimension is scored
+	// on content rather than on whether the model volunteered the tool.
+	finalize := func(iters int, stopped string) (*Result, error) {
+		fctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+		defer cancel()
+		fmsgs := append(msgs, ChatMessage{Role: "user",
+			Content: "You are out of investigation turns. Based on what you found, call the submit tool now with your root cause, the actions you took, and a short blameless postmortem."})
+		cacheBreakpoints(fmsgs)
+		// Offer ONLY the submit tool on this turn: some models (e.g. glm, gemini)
+		// keep emitting shell calls until forced, so removing every other tool
+		// leaves them submit-or-prose. We deliberately do NOT set tool_choice —
+		// some providers (Z.AI/GLM) reject a forced choice with 400 "tool choice
+		// must be auto"; submit-only + a direct instruction is enough.
+		var submitOnly []ToolDef
+		for _, td := range tools {
+			if td.Function.Name == "submit" {
+				submitOnly = append(submitOnly, td)
+			}
+		}
+		resp, err := l.Client.Complete(fctx, ChatRequest{
+			Model: cfg.Model, Messages: fmsgs, Tools: submitOnly,
+			Temperature: cfg.Temperature, TopP: cfg.TopP,
+			Usage: &UsageAccounting{Include: true},
+		})
+		if err == nil {
+			usage.Add(resp.Usage)
+			asst := resp.Message
+			asst.Role = "assistant"
+			tw.message(asst)
+			for _, tc := range asst.ToolCalls {
+				if tc.Function.Name == "submit" {
+					if _, sub, _, _ := l.dispatch(fctx, env, tc); sub != nil {
+						_ = writeSubmission(instanceDir, sub)
+						return &Result{Submission: sub, Iterations: iters, Stopped: stopped + "+forced_submit", Usage: usage}, nil
+					}
+				}
+			}
+			// Model ignored the forced tool_choice; fall back to its prose so the
+			// diagnosis is still graded on what it concluded.
+			if asst.Content != "" {
+				sub := &Submission{RootCause: asst.Content, Actions: "(captured from final message; not submitted via tool)"}
+				_ = writeSubmission(instanceDir, sub)
+				return &Result{Submission: sub, Iterations: iters, Stopped: stopped + "+final_text", Usage: usage}, nil
+			}
+		}
+		return &Result{Iterations: iters, Stopped: stopped, Usage: usage}, nil
+	}
+
 	for i := 0; i < maxIter; i++ {
 		if !deadline.IsZero() && time.Now().After(deadline) {
-			return &Result{Iterations: i, Stopped: "wall_clock", Usage: usage}, nil
+			return finalize(i, "wall_clock")
 		}
 		cacheBreakpoints(msgs)
 		resp, err := l.Client.Complete(ctx, ChatRequest{
@@ -103,7 +155,7 @@ func (l *Loop) Run(ctx context.Context, env *bootstrap.Env, cfg Config, instance
 			}
 		}
 	}
-	return &Result{Iterations: maxIter, Stopped: "max_iterations", Usage: usage}, nil
+	return finalize(maxIter, "max_iterations")
 }
 
 // cacheBreakpoints places prompt-cache breakpoints on the message history: one

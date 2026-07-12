@@ -101,6 +101,9 @@ type ChatRequest struct {
 	Tools       []ToolDef     `json:"tools,omitempty"`
 	Temperature float64       `json:"temperature"`
 	TopP        float64       `json:"top_p,omitempty"`
+	// ToolChoice optionally forces a specific tool (OpenAI shape, e.g.
+	// {"type":"function","function":{"name":"submit"}}); nil lets the model choose.
+	ToolChoice any `json:"tool_choice,omitempty"`
 	// Usage opts into OpenRouter's usage accounting so the response carries token
 	// counts and the run's dollar cost.
 	Usage *UsageAccounting `json:"usage,omitempty"`
