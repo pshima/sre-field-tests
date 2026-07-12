@@ -1,0 +1,23 @@
+{
+  "id": "oom-killed__qwen-qwen3.7-max__seed1__20260711T232614Z",
+  "scenario": "oom-killed",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "qwen/qwen3.7-max",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T16:26:14.6674-07:00",
+  "fault_started_at": "2026-07-11T16:26:19.670435-07:00",
+  "finished_at": "2026-07-11T16:29:30.680341-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 62466,
+    "completion_tokens": 5384,
+    "total_tokens": 67850,
+    "cached_tokens": 55520,
+    "cost_usd": 0.03772
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "retry-storm__default__seed2__20260711T220541Z",
+  "scenario": "retry-storm",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "default",
+  "harness": "codex-cli",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T15:05:41.274305-07:00",
+  "fault_started_at": "2026-07-11T15:05:46.277257-07:00",
+  "finished_at": "2026-07-11T15:09:04.434583-07:00",
+  "harness_version": "e45e100"
+}

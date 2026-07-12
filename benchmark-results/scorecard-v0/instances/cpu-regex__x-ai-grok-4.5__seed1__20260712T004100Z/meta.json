@@ -1,0 +1,24 @@
+{
+  "id": "cpu-regex__x-ai-grok-4.5__seed1__20260712T004100Z",
+  "scenario": "cpu-regex",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "x-ai/grok-4.5",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T17:41:00.489672-07:00",
+  "fault_started_at": "2026-07-11T17:41:05.492589-07:00",
+  "finished_at": "2026-07-11T18:02:10.776268-07:00",
+  "failure_mode": "agent_timeout",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 25592,
+    "completion_tokens": 1623,
+    "total_tokens": 27215,
+    "cached_tokens": 15616,
+    "cost_usd": 0.037498000000000004
+  }
+}

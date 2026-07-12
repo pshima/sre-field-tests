@@ -1,0 +1,24 @@
+{
+  "id": "conn-pool__x-ai-grok-4.5__seed2__20260712T023705Z",
+  "scenario": "conn-pool",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "x-ai/grok-4.5",
+  "harness": "neutral-go",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T19:37:05.881777-07:00",
+  "fault_started_at": "2026-07-11T19:37:10.885522-07:00",
+  "finished_at": "2026-07-11T19:58:16.239003-07:00",
+  "failure_mode": "agent_timeout",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 26031,
+    "completion_tokens": 1670,
+    "total_tokens": 27701,
+    "cached_tokens": 19328,
+    "cost_usd": 0.03309
+  }
+}

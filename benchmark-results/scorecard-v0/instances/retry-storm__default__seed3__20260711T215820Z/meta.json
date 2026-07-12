@@ -1,0 +1,16 @@
+{
+  "id": "retry-storm__default__seed3__20260711T215820Z",
+  "scenario": "retry-storm",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "default",
+  "harness": "claude-cli",
+  "seed": 3,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T14:58:20.344158-07:00",
+  "fault_started_at": "2026-07-11T14:58:25.34744-07:00",
+  "finished_at": "2026-07-11T15:02:25.34517-07:00",
+  "harness_version": "e45e100"
+}

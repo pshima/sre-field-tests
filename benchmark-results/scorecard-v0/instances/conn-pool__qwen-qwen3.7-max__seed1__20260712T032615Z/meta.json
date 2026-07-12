@@ -1,0 +1,23 @@
+{
+  "id": "conn-pool__qwen-qwen3.7-max__seed1__20260712T032615Z",
+  "scenario": "conn-pool",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "qwen/qwen3.7-max",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T20:26:15.749026-07:00",
+  "fault_started_at": "2026-07-11T20:26:20.753145-07:00",
+  "finished_at": "2026-07-11T20:31:15.247094-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 218218,
+    "completion_tokens": 9691,
+    "total_tokens": 227909,
+    "cached_tokens": 205902,
+    "cost_usd": 0.0810265
+  }
+}

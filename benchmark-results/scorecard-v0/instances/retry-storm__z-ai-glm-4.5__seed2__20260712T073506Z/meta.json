@@ -1,0 +1,23 @@
+{
+  "id": "retry-storm__z-ai-glm-4.5__seed2__20260712T073506Z",
+  "scenario": "retry-storm",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "z-ai/glm-4.5",
+  "harness": "neutral-go",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-12T00:35:06.78311-07:00",
+  "fault_started_at": "2026-07-12T00:35:11.787124-07:00",
+  "finished_at": "2026-07-12T00:38:07.704103-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 148513,
+    "completion_tokens": 4157,
+    "total_tokens": 152670,
+    "cached_tokens": 139379,
+    "cost_usd": 0.02995749
+  }
+}

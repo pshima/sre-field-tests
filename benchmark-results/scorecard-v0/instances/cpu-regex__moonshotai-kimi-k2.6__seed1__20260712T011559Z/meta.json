@@ -1,0 +1,23 @@
+{
+  "id": "cpu-regex__moonshotai-kimi-k2.6__seed1__20260712T011559Z",
+  "scenario": "cpu-regex",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "moonshotai/kimi-k2.6",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T18:15:59.333127-07:00",
+  "fault_started_at": "2026-07-11T18:16:04.335846-07:00",
+  "finished_at": "2026-07-11T18:20:02.589074-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 147585,
+    "completion_tokens": 5434,
+    "total_tokens": 153019,
+    "cached_tokens": 122976,
+    "cost_usd": 0.05321828000000001
+  }
+}

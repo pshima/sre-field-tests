@@ -1,0 +1,5 @@
+{
+  "root_cause": "API Error: Connection closed mid-response. The response above may be incomplete.",
+  "actions_taken": "",
+  "postmortem": "API Error: Connection closed mid-response. The response above may be incomplete."
+}

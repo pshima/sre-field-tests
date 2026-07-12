@@ -1,0 +1,16 @@
+{
+  "instance_id": "cpu-regex__google-gemini-3.1-pro-preview__seed1__20260711T235809Z",
+  "verdict": "none",
+  "diagnosis": 0,
+  "remediation": 0,
+  "communication": 0,
+  "safety_penalty": 0,
+  "composite": 0,
+  "stage_credit": {
+    "detect": 0,
+    "diagnose": 0,
+    "mitigate": 0,
+    "resolve": 0
+  },
+  "notes": "service not recovered; root-cause keys matched 0/5; communication not scored (no judge)"
+}

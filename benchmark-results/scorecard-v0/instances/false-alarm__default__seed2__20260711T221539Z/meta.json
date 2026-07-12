@@ -1,0 +1,16 @@
+{
+  "id": "false-alarm__default__seed2__20260711T221539Z",
+  "scenario": "false-alarm",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "default",
+  "harness": "claude-cli",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T15:15:39.975328-07:00",
+  "fault_started_at": "2026-07-11T15:15:44.977963-07:00",
+  "finished_at": "2026-07-11T15:17:59.719042-07:00",
+  "harness_version": "e45e100"
+}

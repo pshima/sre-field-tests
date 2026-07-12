@@ -1,0 +1,23 @@
+{
+  "id": "conn-pool__google-gemini-3.1-pro-preview__seed1__20260712T015828Z",
+  "scenario": "conn-pool",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "google/gemini-3.1-pro-preview",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T18:58:28.402524-07:00",
+  "fault_started_at": "2026-07-11T18:58:33.405459-07:00",
+  "finished_at": "2026-07-11T19:07:19.115873-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 154775,
+    "completion_tokens": 2674,
+    "total_tokens": 157449,
+    "cached_tokens": 35887,
+    "cost_usd": 0.29049902499999997
+  }
+}

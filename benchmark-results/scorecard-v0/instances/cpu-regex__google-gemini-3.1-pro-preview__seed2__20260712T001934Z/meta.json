@@ -1,0 +1,24 @@
+{
+  "id": "cpu-regex__google-gemini-3.1-pro-preview__seed2__20260712T001934Z",
+  "scenario": "cpu-regex",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "google/gemini-3.1-pro-preview",
+  "harness": "neutral-go",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T17:19:34.933155-07:00",
+  "fault_started_at": "2026-07-11T17:19:39.934829-07:00",
+  "finished_at": "2026-07-11T17:40:45.202185-07:00",
+  "failure_mode": "agent_timeout",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 16210,
+    "completion_tokens": 656,
+    "total_tokens": 16866,
+    "cached_tokens": 1173,
+    "cost_usd": 0.038620475
+  }
+}

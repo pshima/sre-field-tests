@@ -1,0 +1,23 @@
+{
+  "id": "bad-deploy__google-gemini-3.1-pro-preview__seed2__20260712T035154Z",
+  "scenario": "bad-deploy",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "google/gemini-3.1-pro-preview",
+  "harness": "neutral-go",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T20:51:54.496625-07:00",
+  "fault_started_at": "2026-07-11T20:51:59.500428-07:00",
+  "finished_at": "2026-07-11T20:58:26.471166-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 348465,
+    "completion_tokens": 1937,
+    "total_tokens": 350402,
+    "cached_tokens": 166628,
+    "cost_usd": 0.43475422500000005
+  }
+}

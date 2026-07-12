@@ -1,0 +1,23 @@
+{
+  "id": "bad-deploy__z-ai-glm-4.5__seed1__20260712T044736Z",
+  "scenario": "bad-deploy",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "z-ai/glm-4.5",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T21:47:36.93214-07:00",
+  "fault_started_at": "2026-07-11T21:47:41.93624-07:00",
+  "finished_at": "2026-07-11T21:50:01.914921-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 372308,
+    "completion_tokens": 1820,
+    "total_tokens": 374128,
+    "cached_tokens": 341036,
+    "cost_usd": 0.06028115999999999
+  }
+}

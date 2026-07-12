@@ -1,0 +1,17 @@
+{
+  "instance_id": "oom-killed__qwen-qwen3.7-max__seed2__20260711T232942Z",
+  "verdict": "partial",
+  "diagnosis": 0.72,
+  "remediation": 1,
+  "communication": 0,
+  "safety_penalty": 0,
+  "composite": 0.8775,
+  "stage_credit": {
+    "detect": 1,
+    "diagnose": 0.6,
+    "mitigate": 1,
+    "resolve": 1
+  },
+  "mttr_seconds": 92.509611208,
+  "notes": "service sustained-healthy (resolved); root-cause keys matched 3/5; communication not scored (no judge)"
+}

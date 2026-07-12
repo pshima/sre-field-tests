@@ -1,0 +1,23 @@
+{
+  "id": "bad-deploy__moonshotai-kimi-k2.6__seed1__20260712T042938Z",
+  "scenario": "bad-deploy",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "moonshotai/kimi-k2.6",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T21:29:38.787354-07:00",
+  "fault_started_at": "2026-07-11T21:29:43.79146-07:00",
+  "finished_at": "2026-07-11T21:36:25.088607-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 319770,
+    "completion_tokens": 11624,
+    "total_tokens": 331394,
+    "cached_tokens": 241808,
+    "cost_usd": 0.12708747999999997
+  }
+}

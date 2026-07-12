@@ -1,0 +1,16 @@
+{
+  "id": "conn-pool__default__seed3__20260711T013321Z",
+  "scenario": "conn-pool",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "default",
+  "harness": "claude-cli",
+  "seed": 3,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-10T18:33:21.367698-07:00",
+  "fault_started_at": "2026-07-10T18:33:26.370311-07:00",
+  "finished_at": "2026-07-10T18:37:11.621244-07:00",
+  "harness_version": "e45e100"
+}

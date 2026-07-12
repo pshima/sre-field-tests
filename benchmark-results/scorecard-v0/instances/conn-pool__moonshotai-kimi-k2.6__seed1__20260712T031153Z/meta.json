@@ -1,0 +1,23 @@
+{
+  "id": "conn-pool__moonshotai-kimi-k2.6__seed1__20260712T031153Z",
+  "scenario": "conn-pool",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "moonshotai/kimi-k2.6",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T20:11:53.872733-07:00",
+  "fault_started_at": "2026-07-11T20:11:58.87677-07:00",
+  "finished_at": "2026-07-11T20:22:31.243001-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 341754,
+    "completion_tokens": 23486,
+    "total_tokens": 365240,
+    "cached_tokens": 292960,
+    "cost_usd": 0.15537514
+  }
+}

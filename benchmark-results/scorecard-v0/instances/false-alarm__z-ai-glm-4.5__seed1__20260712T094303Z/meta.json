@@ -1,0 +1,24 @@
+{
+  "id": "false-alarm__z-ai-glm-4.5__seed1__20260712T094303Z",
+  "scenario": "false-alarm",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "z-ai/glm-4.5",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-12T02:43:03.879958-07:00",
+  "fault_started_at": "2026-07-12T02:43:08.88444-07:00",
+  "finished_at": "2026-07-12T03:04:13.981025-07:00",
+  "failure_mode": "agent_timeout",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 184222,
+    "completion_tokens": 2477,
+    "total_tokens": 186699,
+    "cached_tokens": 168976,
+    "cost_usd": 0.033184359999999996
+  }
+}

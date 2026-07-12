@@ -1,0 +1,24 @@
+{
+  "id": "conn-pool__deepseek-deepseek-v4-pro__seed1__20260712T025831Z",
+  "scenario": "conn-pool",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "deepseek/deepseek-v4-pro",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T19:58:31.562281-07:00",
+  "fault_started_at": "2026-07-11T19:58:36.566512-07:00",
+  "finished_at": "2026-07-11T20:06:14.17235-07:00",
+  "failure_mode": "agent_error",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 336252,
+    "completion_tokens": 9696,
+    "total_tokens": 345948,
+    "cached_tokens": 263168,
+    "cost_usd": 0.0918111088
+  }
+}

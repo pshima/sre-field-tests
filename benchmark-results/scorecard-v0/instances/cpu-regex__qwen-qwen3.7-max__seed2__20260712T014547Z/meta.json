@@ -1,0 +1,23 @@
+{
+  "id": "cpu-regex__qwen-qwen3.7-max__seed2__20260712T014547Z",
+  "scenario": "cpu-regex",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "qwen/qwen3.7-max",
+  "harness": "neutral-go",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T18:45:47.491771-07:00",
+  "fault_started_at": "2026-07-11T18:45:52.49583-07:00",
+  "finished_at": "2026-07-11T18:52:50.730391-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 261504,
+    "completion_tokens": 13194,
+    "total_tokens": 274698,
+    "cached_tokens": 246159,
+    "cost_usd": 0.10392831250000001
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "oom-killed__deepseek-deepseek-v4-pro__seed1__20260711T230256Z",
+  "scenario": "oom-killed",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "deepseek/deepseek-v4-pro",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T16:02:56.035603-07:00",
+  "fault_started_at": "2026-07-11T16:03:01.038765-07:00",
+  "finished_at": "2026-07-11T16:07:04.342465-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 169865,
+    "completion_tokens": 8807,
+    "total_tokens": 178672,
+    "cached_tokens": 144384,
+    "cost_usd": 0.088644216
+  }
+}

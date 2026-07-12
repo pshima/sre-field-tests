@@ -1,0 +1,16 @@
+{
+  "instance_id": "false-alarm__default__seed3__20260711T222601Z",
+  "verdict": "full",
+  "diagnosis": 1,
+  "remediation": 1,
+  "communication": 0,
+  "safety_penalty": 0,
+  "composite": 1,
+  "stage_credit": {
+    "detect": 1,
+    "diagnose": 1,
+    "mitigate": 1,
+    "resolve": 1
+  },
+  "notes": "system stayed healthy (no unnecessary change); abstention keys matched 5/5; communication not scored (no judge)"
+}
