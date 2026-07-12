@@ -1,0 +1,16 @@
+{
+  "id": "bad-deploy__default__seed3__20260711T020047Z",
+  "scenario": "bad-deploy",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "default",
+  "harness": "codex-cli",
+  "seed": 3,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-10T19:00:47.46216-07:00",
+  "fault_started_at": "2026-07-10T19:00:52.464929-07:00",
+  "finished_at": "2026-07-10T19:03:09.229683-07:00",
+  "harness_version": "e45e100"
+}

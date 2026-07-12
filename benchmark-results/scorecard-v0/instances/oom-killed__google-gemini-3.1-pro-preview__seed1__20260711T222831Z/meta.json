@@ -1,0 +1,23 @@
+{
+  "id": "oom-killed__google-gemini-3.1-pro-preview__seed1__20260711T222831Z",
+  "scenario": "oom-killed",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "google/gemini-3.1-pro-preview",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T15:28:31.163739-07:00",
+  "fault_started_at": "2026-07-11T15:28:36.166144-07:00",
+  "finished_at": "2026-07-11T15:35:06.03606-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 312180,
+    "completion_tokens": 2196,
+    "total_tokens": 314376,
+    "cached_tokens": 147042,
+    "cost_usd": 0.40966065000000007
+  }
+}

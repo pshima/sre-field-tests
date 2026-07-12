@@ -1,0 +1,23 @@
+{
+  "id": "cpu-regex__deepseek-deepseek-v4-pro__seed1__20260712T010434Z",
+  "scenario": "cpu-regex",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "deepseek/deepseek-v4-pro",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T18:04:34.352824-07:00",
+  "fault_started_at": "2026-07-11T18:04:39.355685-07:00",
+  "finished_at": "2026-07-11T18:10:22.745138-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 282748,
+    "completion_tokens": 17474,
+    "total_tokens": 300222,
+    "cached_tokens": 252928,
+    "cost_usd": 0.13803929599999998
+  }
+}

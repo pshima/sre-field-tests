@@ -1,0 +1,23 @@
+{
+  "id": "conn-pool__z-ai-glm-4.5__seed2__20260712T034439Z",
+  "scenario": "conn-pool",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "z-ai/glm-4.5",
+  "harness": "neutral-go",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T20:44:39.261818-07:00",
+  "fault_started_at": "2026-07-11T20:44:44.266792-07:00",
+  "finished_at": "2026-07-11T20:47:42.565418-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 314575,
+    "completion_tokens": 2620,
+    "total_tokens": 317195,
+    "cached_tokens": 290410,
+    "cost_usd": 0.05220809999999999
+  }
+}

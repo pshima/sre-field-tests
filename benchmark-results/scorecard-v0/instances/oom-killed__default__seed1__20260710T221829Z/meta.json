@@ -1,0 +1,16 @@
+{
+  "id": "oom-killed__default__seed1__20260710T221829Z",
+  "scenario": "oom-killed",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "default",
+  "harness": "claude-cli",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-10T15:18:29.847993-07:00",
+  "fault_started_at": "2026-07-10T15:18:34.850785-07:00",
+  "finished_at": "2026-07-10T15:22:22.085993-07:00",
+  "harness_version": "e45e100"
+}

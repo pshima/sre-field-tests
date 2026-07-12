@@ -1,0 +1,17 @@
+{
+  "instance_id": "cpu-regex__z-ai-glm-4.5__seed1__20260712T015302Z",
+  "verdict": "partial",
+  "diagnosis": 0,
+  "remediation": 1,
+  "communication": 0,
+  "safety_penalty": 0,
+  "composite": 0.5625,
+  "stage_credit": {
+    "detect": 0,
+    "diagnose": 0,
+    "mitigate": 1,
+    "resolve": 1
+  },
+  "mttr_seconds": 51.007494584,
+  "notes": "service sustained-healthy (resolved); root-cause keys matched 0/5; communication not scored (no judge)"
+}

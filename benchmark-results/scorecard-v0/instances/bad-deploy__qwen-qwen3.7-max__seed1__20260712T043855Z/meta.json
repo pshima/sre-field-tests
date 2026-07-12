@@ -1,0 +1,23 @@
+{
+  "id": "bad-deploy__qwen-qwen3.7-max__seed1__20260712T043855Z",
+  "scenario": "bad-deploy",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "qwen/qwen3.7-max",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T21:38:55.899832-07:00",
+  "fault_started_at": "2026-07-11T21:39:00.903675-07:00",
+  "finished_at": "2026-07-11T21:44:26.083371-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 121000,
+    "completion_tokens": 5069,
+    "total_tokens": 126069,
+    "cached_tokens": 109049,
+    "cost_usd": 0.05103737500000001
+  }
+}

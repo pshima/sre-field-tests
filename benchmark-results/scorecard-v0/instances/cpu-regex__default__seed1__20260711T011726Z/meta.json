@@ -1,0 +1,16 @@
+{
+  "id": "cpu-regex__default__seed1__20260711T011726Z",
+  "scenario": "cpu-regex",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "default",
+  "harness": "codex-cli",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-10T18:17:26.560168-07:00",
+  "fault_started_at": "2026-07-10T18:17:31.562564-07:00",
+  "finished_at": "2026-07-10T18:20:08.554097-07:00",
+  "harness_version": "e45e100"
+}

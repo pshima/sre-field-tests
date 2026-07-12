@@ -1,0 +1,16 @@
+{
+  "id": "bad-deploy__default__seed3__20260711T015233Z",
+  "scenario": "bad-deploy",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "default",
+  "harness": "claude-cli",
+  "seed": 3,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-10T18:52:33.393825-07:00",
+  "fault_started_at": "2026-07-10T18:52:38.396968-07:00",
+  "finished_at": "2026-07-10T18:54:48.413015-07:00",
+  "harness_version": "e45e100"
+}

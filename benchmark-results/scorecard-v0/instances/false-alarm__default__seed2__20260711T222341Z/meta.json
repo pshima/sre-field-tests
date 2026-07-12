@@ -1,0 +1,16 @@
+{
+  "id": "false-alarm__default__seed2__20260711T222341Z",
+  "scenario": "false-alarm",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "default",
+  "harness": "codex-cli",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T15:23:41.221586-07:00",
+  "fault_started_at": "2026-07-11T15:23:46.219701-07:00",
+  "finished_at": "2026-07-11T15:25:49.373753-07:00",
+  "harness_version": "e45e100"
+}

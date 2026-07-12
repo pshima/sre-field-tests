@@ -1,0 +1,17 @@
+{
+  "instance_id": "bad-deploy__default__seed1__20260711T014703Z",
+  "verdict": "full",
+  "diagnosis": 1,
+  "remediation": 1,
+  "communication": 0,
+  "safety_penalty": 0,
+  "composite": 1,
+  "stage_credit": {
+    "detect": 1,
+    "diagnose": 1,
+    "mitigate": 1,
+    "resolve": 1
+  },
+  "mttr_seconds": 35.009156292,
+  "notes": "service sustained-healthy (resolved); root-cause keys matched 5/5; communication not scored (no judge)"
+}

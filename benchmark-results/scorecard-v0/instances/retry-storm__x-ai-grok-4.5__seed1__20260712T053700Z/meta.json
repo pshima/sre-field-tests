@@ -1,0 +1,23 @@
+{
+  "id": "retry-storm__x-ai-grok-4.5__seed1__20260712T053700Z",
+  "scenario": "retry-storm",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "x-ai/grok-4.5",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T22:37:00.474562-07:00",
+  "fault_started_at": "2026-07-11T22:37:05.4774-07:00",
+  "finished_at": "2026-07-11T22:39:07.257973-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 61673,
+    "completion_tokens": 4645,
+    "total_tokens": 66318,
+    "cached_tokens": 53888,
+    "cost_usd": 0.07038400000000002
+  }
+}

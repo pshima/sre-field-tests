@@ -1,0 +1,24 @@
+{
+  "id": "retry-storm__google-gemini-3.1-pro-preview__seed2__20260712T051537Z",
+  "scenario": "retry-storm",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "google/gemini-3.1-pro-preview",
+  "harness": "neutral-go",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T22:15:37.4931-07:00",
+  "fault_started_at": "2026-07-11T22:15:42.496826-07:00",
+  "finished_at": "2026-07-11T22:36:47.871712-07:00",
+  "failure_mode": "agent_timeout",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 145851,
+    "completion_tokens": 5626,
+    "total_tokens": 151477,
+    "cached_tokens": 39831,
+    "cost_usd": 0.296985825
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "retry-storm__qwen-qwen3.7-max__seed2__20260712T071047Z",
+  "scenario": "retry-storm",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "qwen/qwen3.7-max",
+  "harness": "neutral-go",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-12T00:10:47.348322-07:00",
+  "fault_started_at": "2026-07-12T00:10:52.352674-07:00",
+  "finished_at": "2026-07-12T00:31:57.72112-07:00",
+  "failure_mode": "agent_timeout",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 24340,
+    "completion_tokens": 4148,
+    "total_tokens": 28488,
+    "cached_tokens": 18489,
+    "cost_usd": 0.026753000000000006
+  }
+}

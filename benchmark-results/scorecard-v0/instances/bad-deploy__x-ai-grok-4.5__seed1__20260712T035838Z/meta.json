@@ -1,0 +1,23 @@
+{
+  "id": "bad-deploy__x-ai-grok-4.5__seed1__20260712T035838Z",
+  "scenario": "bad-deploy",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "x-ai/grok-4.5",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T20:58:38.692381-07:00",
+  "fault_started_at": "2026-07-11T20:58:43.696584-07:00",
+  "finished_at": "2026-07-11T21:00:11.674179-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 62190,
+    "completion_tokens": 1911,
+    "total_tokens": 64101,
+    "cached_tokens": 53632,
+    "cost_usd": 0.05539800000000001
+  }
+}

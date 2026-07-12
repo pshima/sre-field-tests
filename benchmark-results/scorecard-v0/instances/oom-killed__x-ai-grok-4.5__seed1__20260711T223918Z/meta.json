@@ -1,0 +1,24 @@
+{
+  "id": "oom-killed__x-ai-grok-4.5__seed1__20260711T223918Z",
+  "scenario": "oom-killed",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "x-ai/grok-4.5",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T15:39:18.266153-07:00",
+  "fault_started_at": "2026-07-11T15:39:23.269063-07:00",
+  "finished_at": "2026-07-11T16:00:28.459469-07:00",
+  "failure_mode": "agent_timeout",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 25105,
+    "completion_tokens": 1014,
+    "total_tokens": 26119,
+    "cached_tokens": 17024,
+    "cost_usd": 0.030758000000000004
+  }
+}

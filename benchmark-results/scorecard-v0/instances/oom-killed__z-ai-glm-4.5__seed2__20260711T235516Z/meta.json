@@ -1,0 +1,23 @@
+{
+  "id": "oom-killed__z-ai-glm-4.5__seed2__20260711T235516Z",
+  "scenario": "oom-killed",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "z-ai/glm-4.5",
+  "harness": "neutral-go",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T16:55:16.368998-07:00",
+  "fault_started_at": "2026-07-11T16:55:21.371811-07:00",
+  "finished_at": "2026-07-11T16:57:57.559749-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 105955,
+    "completion_tokens": 2790,
+    "total_tokens": 108745,
+    "cached_tokens": 99861,
+    "cost_usd": 0.020779110000000007
+  }
+}

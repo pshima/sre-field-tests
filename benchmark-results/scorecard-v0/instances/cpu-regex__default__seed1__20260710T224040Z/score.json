@@ -1,0 +1,16 @@
+{
+  "instance_id": "cpu-regex__default__seed1__20260710T224040Z",
+  "verdict": "partial",
+  "diagnosis": 1,
+  "remediation": 0,
+  "communication": 0,
+  "safety_penalty": 0,
+  "composite": 0.43749999999999994,
+  "stage_credit": {
+    "detect": 1,
+    "diagnose": 1,
+    "mitigate": 0,
+    "resolve": 0
+  },
+  "notes": "service not recovered; root-cause keys matched 5/5; communication not scored (no judge)"
+}

@@ -1,0 +1,16 @@
+{
+  "id": "conn-pool__default__seed2__20260711T014028Z",
+  "scenario": "conn-pool",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "default",
+  "harness": "codex-cli",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-10T18:40:28.785859-07:00",
+  "fault_started_at": "2026-07-10T18:40:33.788702-07:00",
+  "finished_at": "2026-07-10T18:43:26.3815-07:00",
+  "harness_version": "e45e100"
+}

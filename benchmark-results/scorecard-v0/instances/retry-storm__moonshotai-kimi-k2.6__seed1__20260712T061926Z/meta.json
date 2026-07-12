@@ -1,0 +1,23 @@
+{
+  "id": "retry-storm__moonshotai-kimi-k2.6__seed1__20260712T061926Z",
+  "scenario": "retry-storm",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "moonshotai/kimi-k2.6",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T23:19:26.900966-07:00",
+  "fault_started_at": "2026-07-11T23:19:31.90482-07:00",
+  "finished_at": "2026-07-11T23:27:48.607194-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 219835,
+    "completion_tokens": 13177,
+    "total_tokens": 233012,
+    "cached_tokens": 180464,
+    "cost_usd": 0.09798803
+  }
+}

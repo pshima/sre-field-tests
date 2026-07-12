@@ -1,0 +1,24 @@
+{
+  "id": "false-alarm__deepseek-deepseek-v4-pro__seed2__20260712T082433Z",
+  "scenario": "false-alarm",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "deepseek/deepseek-v4-pro",
+  "harness": "neutral-go",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-12T01:24:33.560886-07:00",
+  "fault_started_at": "2026-07-12T01:24:38.564669-07:00",
+  "finished_at": "2026-07-12T01:45:43.697976-07:00",
+  "failure_mode": "agent_timeout",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 138533,
+    "completion_tokens": 13228,
+    "total_tokens": 151761,
+    "cached_tokens": 117760,
+    "cost_usd": 0.09172407199999999
+  }
+}

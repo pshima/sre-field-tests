@@ -1,0 +1,23 @@
+{
+  "id": "oom-killed__moonshotai-kimi-k2.6__seed2__20260711T231759Z",
+  "scenario": "oom-killed",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "moonshotai/kimi-k2.6",
+  "harness": "neutral-go",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T16:17:59.010694-07:00",
+  "fault_started_at": "2026-07-11T16:18:04.013581-07:00",
+  "finished_at": "2026-07-11T16:26:02.199793-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 249134,
+    "completion_tokens": 11441,
+    "total_tokens": 260575,
+    "cached_tokens": 203520,
+    "cost_usd": 0.09964705000000001
+  }
+}

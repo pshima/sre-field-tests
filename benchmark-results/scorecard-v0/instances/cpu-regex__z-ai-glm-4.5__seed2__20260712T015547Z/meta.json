@@ -1,0 +1,23 @@
+{
+  "id": "cpu-regex__z-ai-glm-4.5__seed2__20260712T015547Z",
+  "scenario": "cpu-regex",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "z-ai/glm-4.5",
+  "harness": "neutral-go",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T18:55:47.398988-07:00",
+  "fault_started_at": "2026-07-11T18:55:52.401662-07:00",
+  "finished_at": "2026-07-11T18:58:12.986522-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 145339,
+    "completion_tokens": 2027,
+    "total_tokens": 147366,
+    "cached_tokens": 134974,
+    "cost_usd": 0.025525540000000003
+  }
+}

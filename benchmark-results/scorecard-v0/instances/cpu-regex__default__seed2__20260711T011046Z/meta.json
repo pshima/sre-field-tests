@@ -1,0 +1,16 @@
+{
+  "id": "cpu-regex__default__seed2__20260711T011046Z",
+  "scenario": "cpu-regex",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "default",
+  "harness": "claude-cli",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-10T18:10:46.369081-07:00",
+  "fault_started_at": "2026-07-10T18:10:51.377882-07:00",
+  "finished_at": "2026-07-10T18:13:55.975782-07:00",
+  "harness_version": "e45e100"
+}

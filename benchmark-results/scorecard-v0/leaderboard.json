@@ -1,0 +1,194 @@
+{
+ "meta": {
+  "instances": 108,
+  "contestants": 8,
+  "scenarios": [
+   "oom-killed",
+   "cpu-regex",
+   "conn-pool",
+   "bad-deploy",
+   "retry-storm",
+   "false-alarm"
+  ],
+  "cost": 7.53,
+  "date": "2026-07-12"
+ },
+ "rows": [
+  {
+   "name": "Codex",
+   "type": "cli",
+   "n": 18,
+   "full": 15,
+   "mean": 0.921,
+   "diag": 0.946,
+   "remed": 1.0,
+   "cost": 0.0,
+   "cost_per": 0.0,
+   "timeouts": 0,
+   "scen": {
+    "oom-killed": 0.959,
+    "cpu-regex": 1.0,
+    "conn-pool": 0.918,
+    "bad-deploy": 0.98,
+    "retry-storm": 1.0,
+    "false-alarm": 0.667
+   },
+   "passk": 4,
+   "nscen": 6
+  },
+  {
+   "name": "Claude Code",
+   "type": "cli",
+   "n": 18,
+   "full": 13,
+   "mean": 0.83,
+   "diag": 0.944,
+   "remed": 0.889,
+   "cost": 0.0,
+   "cost_per": 0.0,
+   "timeouts": 0,
+   "scen": {
+    "oom-killed": 1.0,
+    "cpu-regex": 0.812,
+    "conn-pool": 1.0,
+    "bad-deploy": 1.0,
+    "retry-storm": 0.667,
+    "false-alarm": 0.5
+   },
+   "passk": 3,
+   "nscen": 6
+  },
+  {
+   "name": "qwen/qwen3.7-max",
+   "type": "raw",
+   "n": 12,
+   "full": 6,
+   "mean": 0.616,
+   "diag": 0.55,
+   "remed": 0.75,
+   "cost": 0.67,
+   "cost_per": 0.0562,
+   "timeouts": 3,
+   "scen": {
+    "oom-killed": 0.908,
+    "cpu-regex": 0.939,
+    "conn-pool": 0.908,
+    "bad-deploy": 0.939,
+    "retry-storm": 0.0,
+    "false-alarm": 0.0
+   },
+   "passk": 2,
+   "nscen": 6
+  },
+  {
+   "name": "deepseek/deepseek-v4-pro",
+   "type": "raw",
+   "n": 12,
+   "full": 4,
+   "mean": 0.535,
+   "diag": 0.477,
+   "remed": 0.833,
+   "cost": 1.19,
+   "cost_per": 0.0988,
+   "timeouts": 2,
+   "scen": {
+    "oom-killed": 1.0,
+    "cpu-regex": 0.814,
+    "conn-pool": 0.531,
+    "bad-deploy": 0.5,
+    "retry-storm": 0.156,
+    "false-alarm": 0.206
+   },
+   "passk": 1,
+   "nscen": 6
+  },
+  {
+   "name": "x-ai/grok-4.5",
+   "type": "raw",
+   "n": 12,
+   "full": 4,
+   "mean": 0.451,
+   "diag": 0.462,
+   "remed": 0.583,
+   "cost": 0.71,
+   "cost_per": 0.0594,
+   "timeouts": 6,
+   "scen": {
+    "oom-killed": 0.5,
+    "cpu-regex": 0.5,
+    "conn-pool": 0.0,
+    "bad-deploy": 0.969,
+    "retry-storm": 0.581,
+    "false-alarm": 0.156
+   },
+   "passk": 1,
+   "nscen": 6
+  },
+  {
+   "name": "z-ai/glm-4.5",
+   "type": "raw",
+   "n": 12,
+   "full": 0,
+   "mean": 0.308,
+   "diag": 0.0,
+   "remed": 0.667,
+   "cost": 0.38,
+   "cost_per": 0.0313,
+   "timeouts": 3,
+   "scen": {
+    "oom-killed": 0.281,
+    "cpu-regex": 0.281,
+    "conn-pool": 0.562,
+    "bad-deploy": 0.281,
+    "retry-storm": 0.237,
+    "false-alarm": 0.206
+   },
+   "passk": 0,
+   "nscen": 6
+  },
+  {
+   "name": "moonshotai/kimi-k2.6",
+   "type": "raw",
+   "n": 12,
+   "full": 1,
+   "mean": 0.258,
+   "diag": 0.083,
+   "remed": 0.417,
+   "cost": 0.94,
+   "cost_per": 0.0782,
+   "timeouts": 3,
+   "scen": {
+    "oom-killed": 0.5,
+    "cpu-regex": 0.0,
+    "conn-pool": 0.281,
+    "bad-deploy": 0.281,
+    "retry-storm": 0.281,
+    "false-alarm": 0.206
+   },
+   "passk": 0,
+   "nscen": 6
+  },
+  {
+   "name": "google/gemini-3.1-pro-preview",
+   "type": "raw",
+   "n": 12,
+   "full": 0,
+   "mean": 0.256,
+   "diag": 0.0,
+   "remed": 0.5,
+   "cost": 3.64,
+   "cost_per": 0.3035,
+   "timeouts": 3,
+   "scen": {
+    "oom-killed": 0.562,
+    "cpu-regex": 0.0,
+    "conn-pool": 0.0,
+    "bad-deploy": 0.562,
+    "retry-storm": 0.0,
+    "false-alarm": 0.412
+   },
+   "passk": 0,
+   "nscen": 6
+  }
+ ]
+}

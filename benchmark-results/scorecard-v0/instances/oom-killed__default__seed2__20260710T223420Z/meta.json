@@ -1,0 +1,16 @@
+{
+  "id": "oom-killed__default__seed2__20260710T223420Z",
+  "scenario": "oom-killed",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "default",
+  "harness": "codex-cli",
+  "seed": 2,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-10T15:34:20.490638-07:00",
+  "fault_started_at": "2026-07-10T15:34:25.493316-07:00",
+  "finished_at": "2026-07-10T15:37:12.646009-07:00",
+  "harness_version": "e45e100"
+}

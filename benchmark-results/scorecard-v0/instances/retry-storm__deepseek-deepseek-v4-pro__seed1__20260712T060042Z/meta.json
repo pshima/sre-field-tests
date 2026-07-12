@@ -1,0 +1,23 @@
+{
+  "id": "retry-storm__deepseek-deepseek-v4-pro__seed1__20260712T060042Z",
+  "scenario": "retry-storm",
+  "scenario_git_sha": "",
+  "tier": "tier0-docker",
+  "model": "deepseek/deepseek-v4-pro",
+  "harness": "neutral-go",
+  "seed": 1,
+  "sampling": {
+    "temperature": 0
+  },
+  "started_at": "2026-07-11T23:00:42.009104-07:00",
+  "fault_started_at": "2026-07-11T23:00:47.014539-07:00",
+  "finished_at": "2026-07-11T23:11:38.591093-07:00",
+  "harness_version": "e45e100",
+  "usage": {
+    "prompt_tokens": 254751,
+    "completion_tokens": 16982,
+    "total_tokens": 271733,
+    "cached_tokens": 207488,
+    "cost_usd": 0.08305392759999998
+  }
+}
