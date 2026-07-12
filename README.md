@@ -13,6 +13,10 @@ and communication** — reported with **pass^k reliability and real error bars**
 Everything runs on a laptop in plain Docker. No cluster, no cloud account, no API key required to
 try it (the `oracle` and `noop` reference harnesses exercise the whole pipeline offline).
 
+> **📊 First results — [interactive scorecard v0](https://pshima.github.io/sre-field-tests/)**
+> (8 agents × 6 scenarios × 108 instances). Source + per-instance records in
+> [`benchmark-results/scorecard-v0/`](benchmark-results/scorecard-v0/).
+
 ---
 
 ## Why this exists
