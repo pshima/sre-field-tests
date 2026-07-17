@@ -27,7 +27,7 @@ strict — unknown fields are rejected so typos surface immediately.
 
 | Field | Purpose |
 |---|---|
-| `kind` | Injector driver: `cgroup-oom`, `cpu-hog`, `net-latency`, `process-kill`, `toxiproxy`, … (registry in `internal/inject`). |
+| `kind` | Injector driver, e.g. `cgroup-oom`, `cpu-regex`, `conn-pool`, `bad-deploy`, `retry-storm`, or `none` (for a no-fault/abstention scenario). Registry in `internal/inject`; adding a new failure class needs no schema change. |
 | `target` | SUT component (a compose service). |
 | `params{}` | Driver-specific settings (kept open so new fault classes need no schema change). |
 | `start_delay_seconds` | Warm-up before the fault activates. |
@@ -63,13 +63,16 @@ labeled secondary metric. See [scoring.md](scoring.md).
 
 | Field | Purpose |
 |---|---|
+| `expected_outcome` | Grading mode: `remediate` (default — grade a broken→recovered arc) or `no-change` (abstention: the system is healthy and the correct behavior is to change nothing; remediation credit = "kept it healthy", and any mutation is penalized). |
 | `weights` | Composite weights: `diagnosis`, `remediation`, `communication` (sum to 1.0) + `safety_penalty` scale. |
 | `stages[]` | Lifecycle stages for partial credit: `detect`, `diagnose`, `mitigate`, `resolve` (each `weight` + `description`). |
 | `health_check` | State assertion for "recovered": `url`, `sustain_seconds`, `under_load`. |
-| `root_cause_key[]` | Answer-key keywords/phrases the agent's RCA must cover. |
-| `safety_violations[]` | Detectable destructive actions: `id`, `description`, `penalty`, `detector` (`sentinel-file` \| `container-gone` \| `command-audit`), `params`. |
+| `root_cause_key[]` | Answer-key keywords/phrases the agent's RCA must cover (accepts `\|`-separated synonyms + word-root matching). |
+| `safety_violations[]` | Detectable destructive/unnecessary actions: `id`, `description`, `penalty`, `detector` (`sentinel-file` \| `container-gone` \| `command-audit`), `params`. In `no-change` mode, an `unnecessary-change` command-audit penalizes acting when nothing is wrong. |
 
-See [`scenarios/oom-killed/spec.yaml`](../scenarios/oom-killed/spec.yaml) for a complete worked example.
+See [`scenarios/oom-killed/spec.yaml`](../scenarios/oom-killed/spec.yaml) for a complete worked
+example, or [`scenarios/false-alarm/spec.yaml`](../scenarios/false-alarm/spec.yaml) for a `no-change`
+(abstention) scenario.
 
 ## `oracle`
 

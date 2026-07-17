@@ -13,16 +13,31 @@ source the same way a scenario is. See [`suites/`](../suites).
 name: cli-sweep
 tier: tier0-docker
 seeds: 3
-scenarios: [oom-killed, cpu-regex, conn-pool]
+scenarios: [oom-killed, cpu-regex, conn-pool, bad-deploy, retry-storm, false-alarm]
 matrix:
   - { harness: claude-cli, model: default }
   - { harness: codex-cli,  model: default }
 ```
 
-This expands to `scenarios × matrix × seeds` = 3 × 2 × 3 = **18 cells**, run strictly one at a
+This expands to `scenarios × matrix × seeds` = 6 × 2 × 3 = **36 cells**, run strictly one at a
 time (all of one scenario's cells before the next). Fields: `name`, `tier`, `seeds` (≥1),
 `scenarios[]`, `matrix[]` (each a `harness`+`model`). Harness values are the same as `sreft run`:
-`claude-cli`, `codex-cli`, `neutral-go`, `oracle`, `noop`.
+`neutral-go` (OpenRouter), `claude-cli`, `codex-cli`, the keyless references `oracle` / `noop`, and
+the deterministic reflex baselines `always-restart` / `mask`.
+
+### The shipped suites
+
+| Suite | What it runs | Cost |
+|---|---|---|
+| `smoke` | oracle + noop on one scenario — a fast pipeline check | keyless |
+| `baselines` | oracle · noop · always-restart across all scenarios (the non-triviality proof) | keyless |
+| `baselines-mask` | the masking reflex on the resource-exhaustion scenarios | keyless |
+| `subscription` | `claude-cli` + `codex-cli` × all scenarios | uses your Claude/Codex subscriptions (no OpenRouter cost) |
+| `openrouter` | six frontier flagships via `neutral-go` × all scenarios | OpenRouter (per-token; prompt-cached) |
+| `cli-sweep` | claude-cli + codex-cli × all scenarios | subscriptions |
+
+The `subscription` / `openrouter` split is deliberate: run the models you have a plan for on their
+native CLIs, and everything else through the metered neutral harness.
 
 ## `sreft bench`
 
@@ -41,7 +56,11 @@ sreft bench suites/cli-sweep.yaml
 - Writes everything into a **run directory** and prints the scorecard at the end.
 
 Reference harnesses need no API key, so `sreft bench suites/smoke.yaml` (oracle + noop) is a fast,
-free way to check the whole pipeline.
+free way to check the whole pipeline. The `neutral-go` / `openrouter` path needs an OpenRouter key,
+which `sreft` auto-loads at startup (an already-set `OPENROUTER_API_KEY`, a `.env` line, or a raw
+`OPENROUTER_KEY` file — all gitignored). It applies prompt caching and records per-run token + `$`
+cost, surfaced as **Tokens** and **$/inc** columns in the scorecard — see
+[reproducing.md](reproducing.md).
 
 ## A run (the output)
 

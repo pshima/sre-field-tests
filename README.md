@@ -165,14 +165,20 @@ how the score falls out — alongside its `spec.yaml`. The structure is a projec
 in [`docs/scenario-walkthrough-template.md`](docs/scenario-walkthrough-template.md) and **enforced
 by a test** (a scenario can't merge without its walkthrough).
 
+**Six scenarios** across four failure classes:
+
 | Scenario | Failure class | Real incidents | Walkthrough |
 |---|---|---|---|
-| **`oom-killed`** | Memory leak → cgroup OOM (exit 137) crash loop | GKE OOM patterns | [walkthrough](scenarios/oom-killed/README.md) |
-| **`cpu-regex`** | Catastrophic regex backtracking (ReDoS) → CPU + worker-pool exhaustion | Cloudflare 2019, Stack Overflow 2016 | [walkthrough](scenarios/cpu-regex/README.md) |
-| **`conn-pool`** | Slow queries hold every pooled DB connection → pool exhaustion (DB idle) | Postgres pool-timeout outages | [walkthrough](scenarios/conn-pool/README.md) |
-| **`bad-deploy`** | A broken release (v2) fails health; the fix is to roll back, not tune | Change-to-a-live-system (~70% of outages), Knight Capital 2012 | [walkthrough](scenarios/bad-deploy/README.md) |
+| **`oom-killed`** | *resource-exhaustion* — memory leak → cgroup OOM (exit 137) crash loop | GKE OOM patterns | [walkthrough](scenarios/oom-killed/README.md) |
+| **`cpu-regex`** | *resource-exhaustion* — catastrophic regex backtracking (ReDoS) → CPU + worker-pool exhaustion | Cloudflare 2019, Stack Overflow 2016 | [walkthrough](scenarios/cpu-regex/README.md) |
+| **`conn-pool`** | *resource-exhaustion* — slow queries hold every pooled DB connection → pool exhaustion (DB idle) | Postgres pool-timeout outages | [walkthrough](scenarios/conn-pool/README.md) |
+| **`bad-deploy`** | *bad-change* — a broken release (v2) fails health; the fix is to roll back, not tune | Change-to-a-live-system (~70% of outages), Knight Capital 2012 | [walkthrough](scenarios/bad-deploy/README.md) |
+| **`retry-storm`** | *dependency* — unbounded retries against a degraded dependency saturate the caller's pool | AWS DynamoDB retry storm 2015 | [walkthrough](scenarios/retry-storm/README.md) |
+| **`false-alarm`** | *abstention* — a page fires but nothing is broken; the correct move is to **change nothing** | Noisy alerting / on-call reflexes | [walkthrough](scenarios/false-alarm/README.md) |
 
-Both are validated end-to-end on real Docker: oracle → **1.00 FULL**, no-op → **0.00 NONE**.
+Every scenario is validated end-to-end on real Docker: oracle → **1.00 FULL**, no-op → **0.00 NONE**
+(`false-alarm` inverts the gate — the correct reference *abstains* and scores FULL). See the first
+cross-model results in the [live scorecard](https://pshima.github.io/sre-field-tests/).
 
 ---
 
@@ -185,18 +191,19 @@ internal/
   scenario/           spec schema + loader (and the walkthrough-enforcement test)
   suite/              benchmark suite schema + run manifest
   bootstrap/          tiered infra (docker-compose today; terraform later)
-  inject/             fault drivers (cgroup-oom, cpu-regex, conn-pool)
-  agentloop/          OpenRouter tool-use loop; shell/read/write/submit tools; transcript
+  inject/             fault drivers (cgroup-oom, cpu-regex, conn-pool, bad-deploy, retry-storm, none)
+  agentloop/          OpenRouter tool-use loop; shell/read/write/submit tools; prompt caching; token/$ usage; transcript
   cliagent/           installed-CLI harness adapters (claude-cli, codex-cli)
   observe/            Engine-API collectors + crash-safe JSONL writer/reader
-  score/              state-based grader + scorecard aggregation
+  score/              state-based grader (incl. no-change/abstention mode) + scorecard aggregation (tokens/$)
   selftest/           the `sreft verify` scenario self-test
-  refrun/             oracle / no-op reference harnesses (keyless)
-  instance/           instance metadata + results layout
-scenarios/<id>/       spec.yaml · README.md · app/ · bootstrap/ · oracle/
-suites/               benchmark suite definitions (cli-sweep, smoke)
+  refrun/             keyless reference harnesses: oracle · noop · abstain · always-restart · mask
+  instance/           instance metadata (+ token/$ usage) + results layout
+scenarios/<id>/       spec.yaml · README.md · app/ · bootstrap/ · oracle/  (+ baselines/ where a mask baseline ships)
+suites/               benchmark suites: smoke · cli-sweep · subscription · openrouter · baselines · baselines-mask
 runs/                 bench output: runs/<id>/ with manifest.json + instances + scorecard.md (gitignored)
-docs/                 scenario-spec · scoring · running-benchmarks · result-schema · positioning · walkthrough template
+benchmark-results/    committed, published results (scorecard-v0/: SCORECARD.md, scorecard.html, per-instance records)
+docs/                 scenario-spec · scoring · running-benchmarks · reproducing · baselines · result-schema · positioning · walkthrough template
 RESEARCH.md           foundational research (benchmarks, SRE, incidents, tooling)
 ```
 
@@ -259,14 +266,20 @@ run them only against a scenario you've stood up.
 
 **Neutral harness (OpenRouter).** `neutral-go` routes any model through OpenRouter's
 OpenAI-compatible API — every model runs the *identical* Go tool loop, the fairest cross-model
-comparison. Needs a key:
+comparison. It applies prompt caching and records per-run token + `$` cost. Needs a key, which
+`sreft` auto-loads at startup (in order: an already-set `OPENROUTER_API_KEY`, a `KEY=VALUE` line in
+`.env`, or a raw `OPENROUTER_KEY` file — all gitignored):
 
 ```sh
-export OPENROUTER_API_KEY=sk-or-...          # or put it in .env (gitignored)
+echo 'sk-or-...' > OPENROUTER_KEY             # or: export OPENROUTER_API_KEY=... / put it in .env
 ./bin/sreft run oom-killed --harness neutral-go --model anthropic/claude-sonnet-5 --seed 1
-# ...≥3 seeds each, then:
-./bin/sreft report --out docs/scorecard.md
+# ...≥2–3 seeds each, then:
+./bin/sreft report                            # scorecard incl. Tokens and $/inc columns
 ```
+
+The first cross-model run — **8 agents × 6 scenarios × 108 instances** — is published as the
+[live scorecard](https://pshima.github.io/sre-field-tests/) with source under
+[`benchmark-results/scorecard-v0/`](benchmark-results/scorecard-v0/).
 
 ---
 
@@ -290,23 +303,24 @@ Scenarios are self-contained directories. To add one:
 
 ## Status & roadmap
 
-**The pipeline is complete and validated on Docker** — the full skeleton (M0 scaffolding · M1
-scenario environment + self-test · M2 neutral agent loop + state-based grader · M3 scorecard
-aggregation) plus:
+**The pipeline is complete, validated, and has produced its first real scorecard** — the full
+skeleton (M0 scaffolding · M1 scenario environment + self-test · M2 neutral agent loop + state-based
+grader · M3 scorecard aggregation) plus:
 
-- **Three scenarios** across three failure classes (`oom-killed`, `cpu-regex`, `conn-pool`), each
-  with an oracle→FULL / no-op→ZERO gate.
-- **Real agents running** — the `claude-cli` and `codex-cli` harnesses drive the installed CLI
-  agents headlessly (no API key), and both scored FULL on `oom-killed`
-  ([docs/scorecard-v0.md](docs/scorecard-v0.md)).
+- **Six scenarios** across four failure classes (resource-exhaustion, bad-change, dependency,
+  abstention), each with an oracle→FULL / no-op→ZERO gate and deterministic non-LLM reflex
+  baselines to prove non-triviality.
+- **First cross-model scorecard** — 8 agents (`claude-cli`, `codex-cli`, and six OpenRouter
+  flagships) × 6 scenarios × 108 instances, with pass^k reliability and real token/`$` cost.
+  Published as a [live scorecard](https://pshima.github.io/sre-field-tests/); source under
+  [`benchmark-results/scorecard-v0/`](benchmark-results/scorecard-v0/).
+- **Neutral OpenRouter rows** (issue #5) — done: prompt-cached, cost-accounted runs across the
+  frontier models.
 
 Next:
 
-- **First multi-scenario, multi-agent scorecard** — run the CLI harnesses across all three
-  scenarios with several seeds each.
-- **Neutral OpenRouter rows** (issue #5) — the pipeline is ready; needs `OPENROUTER_API_KEY`.
-- **More scenarios** — TLS cert expiry, bad-deploy/rollback, disk-full, deadlock, retry storm, …
-  (prioritized in `RESEARCH.md`).
+- **More scenarios** — TLS cert expiry, disk-full, deadlock, cache stampede, … (prioritized in
+  `RESEARCH.md`); grow toward the ~1000-instance scale that tightens the confidence intervals.
 - **Cloud / Terraform Tier-1**, a Gemini CLI adapter, a deterministic-snapshot tier for model-card
   tables, a held-out split + canary, and a public leaderboard.
 
@@ -321,9 +335,12 @@ Work is tracked in **GitHub Issues**; see the
 |---|---|
 | [`RESEARCH.md`](RESEARCH.md) | The foundational research the whole design rests on. |
 | [`docs/positioning.md`](docs/positioning.md) | How this compares to existing AIOps/SRE benchmarks, and the wedge. |
-| [`docs/running-benchmarks.md`](docs/running-benchmarks.md) | Suites, `sreft bench`/`rescore`/`report`, and run directories. |
-| [`docs/scoring.md`](docs/scoring.md) | The scoring engine: dimensions, composite, pass^k, the oracle/no-op gate. |
+| [`docs/running-benchmarks.md`](docs/running-benchmarks.md) | Suites, `sreft bench`/`rescore`/`report`, run directories, and cost accounting. |
+| [`docs/scoring.md`](docs/scoring.md) | The scoring engine: dimensions, composite, pass^k, the oracle/no-op gate, abstention. |
+| [`docs/baselines.md`](docs/baselines.md) | The deterministic non-LLM reflex baselines and the non-triviality proof. |
+| [`docs/reproducing.md`](docs/reproducing.md) | Cost/token accounting and keyless re-scoring (`sreft rescore`). |
 | [`docs/scenario-spec.md`](docs/scenario-spec.md) | The `spec.yaml` schema. |
 | [`docs/scenario-walkthrough-template.md`](docs/scenario-walkthrough-template.md) | The required shape of every scenario walkthrough. |
 | [`docs/result-schema.md`](docs/result-schema.md) | The observer stream + instance-directory formats. |
-| [`docs/scorecard-v0.md`](docs/scorecard-v0.md) | The first reference scorecard + the wide-CI disclosure. |
+| [`docs/scorecard-v0.md`](docs/scorecard-v0.md) | The first cross-model scorecard (pointer to the published results). |
+| [live scorecard](https://pshima.github.io/sre-field-tests/) | The published v0 results — 8 agents × 6 scenarios, interactive. |
