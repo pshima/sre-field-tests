@@ -113,6 +113,9 @@
   .mono-cell{font-family:ui-monospace,Menlo,monospace; font-size:13.5px; color:var(--muted);}
   .mono-cell b{color:var(--ink); font-weight:650;}
   .cost0{color:var(--good); font-weight:650;}
+  .sub{color:var(--muted); font-weight:600; border-bottom:1px dotted var(--faint); cursor:help;}
+  .costnote{font-family:ui-monospace,Menlo,monospace; font-size:12px; color:var(--faint); margin:12px 2px 0; line-height:1.65; max-width:78ch;}
+  .costnote b{color:var(--muted);}
   @keyframes grow{from{transform:scaleX(.02)} to{transform:scaleX(1)}}
   @media (prefers-reduced-motion:reduce){.fill{animation:none}}
 
@@ -162,12 +165,11 @@
     box-shadow:var(--shadow); opacity:0; transition:opacity .1s; max-width:230px;}
   .tip .lab{color:var(--faint); display:block; font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; margin-bottom:3px;}
 </style>
-
 <div class="wrap">
   <header>
     <p class="eyebrow">SRE Field Tests · Benchmark run 2026-07-12</p>
     <h1>SRE Scorecard <span class="v">v0</span></h1>
-    <p class="lede">Eight agents dropped into live, broken systems — real incidents reproduced in Docker — and scored on the <b>recovered state</b>, not the transcript: diagnosis, remediation &amp; MTTR, safety, across <b>six scenarios</b>. Two run inside their native coding CLIs on subscription; six frontier models run through one neutral, disclosed harness.</p>
+    <p class="lede">Eight agents dropped into live, broken systems — real incidents reproduced in Docker — and scored on the <b>recovered state</b>, not the transcript: diagnosis, remediation &amp; MTTR, safety, across <b>six scenarios</b>. Two run inside their native coding CLIs on <b>paid Claude/Codex subscriptions</b> (flat plan, no per-incident API meter); six frontier models run through one neutral, disclosed harness billed per token.</p>
     <div class="meta" id="meta"></div>
   </header>
 
@@ -181,6 +183,7 @@
       </tr></thead>
       <tbody></tbody>
     </table></div></div>
+    <p class="costnote"><b>On the $/inc column:</b> this is <em>metered OpenRouter API cost</em> per incident. The two CLI agents run on <b>paid Claude/Codex subscriptions</b> — $0 <em>marginal</em> API cost, but a flat monthly plan that is not per-incident and <b>not free</b>. Their rows show “plan”, not a dollar figure, because subscription and per-token pricing aren't directly comparable.</p>
   </section>
 
   <section>
@@ -196,7 +199,7 @@
 
   <section>
     <div class="sec-head"><span class="sec-num">03</span><h2>Cost vs. quality</h2></div>
-    <p class="sec-note">Dollars spent per incident against mean SRE score. The subscription CLIs sit at the free-and-best corner; the priciest raw model lands dead last.</p>
+    <p class="sec-note">Metered API cost per incident against mean SRE score. The subscription CLIs have no per-incident meter (a flat paid plan), so they're plotted at $0 <em>marginal</em> — not as “free.” Among the per-token raw models, cost spans ~6× and the priciest lands dead last.</p>
     <div class="chart">
       <svg id="scatter" viewBox="0 0 720 380" role="img" aria-label="Scatter of cost per incident versus mean SRE score"></svg>
       <div class="legend">
@@ -222,7 +225,7 @@
   </section>
 
   <footer>
-    <div><b>108 instances</b> · 8 contestants · 6 scenarios · state-based grader · <b>$7.53</b> total (OpenRouter; CLIs on subscription) · 20 wall-clock timeouts</div>
+    <div><b>108 instances</b> · 8 contestants · 6 scenarios · state-based grader · <b>$7.53</b> OpenRouter API spend (the Claude &amp; Codex CLIs run on separate paid subscriptions, not metered per incident) · 20 wall-clock timeouts</div>
     <div>Grade the recovered system, not the transcript. Reliability is the headline: pass^k over the mean. Full harness &amp; scenarios disclosed — <b>github.com/pshima/sre-field-tests</b></div>
   </footer>
 </div>
@@ -253,7 +256,7 @@ function heatBg(v){ const a = 0.05 + 0.52*v; return `rgba(var(--accent-rgb),${a.
 // meta chips
 document.getElementById('meta').innerHTML = [
   ['instances','108'],['contestants','8'],['scenarios','6'],['seeds','2–3'],
-  ['OpenRouter','$7.53'],['CLI cost','$0']
+  ['OpenRouter API','$7.53'],['CLI runs','paid plan']
 ].map(([l,v])=>`<span class="chip">${l} <b>${v}</b></span>`).join('');
 
 // standings
@@ -261,7 +264,9 @@ document.querySelector('#standings tbody').innerHTML = DATA.rows.map((r,i)=>{
   const rk = i<3 ? `<td class="rank medal">${medal[i]}</td>` : `<td class="rank">${i+1}</td>`;
   const tag = `<span class="tag ${r.type}">${r.type==='cli'?'CLI':'raw'}</span>`;
   const bar = `<div class="scorebar"><div class="track"><div class="fill" style="width:${(r.mean*100).toFixed(0)}%"></div></div><span class="scoreval">${r.mean.toFixed(2)}</span></div>`;
-  const cost = r.cost===0 ? `<span class="cost0">free</span>` : `$${r.cost_per.toFixed(3)}`;
+  const cost = r.type==='cli'
+    ? `<span class="sub" title="Paid Claude/Codex subscription — $0 marginal OpenRouter cost, but a flat monthly plan: not per-incident, not free">plan</span>`
+    : `$${r.cost_per.toFixed(3)}`;
   return `<tr>${rk}
     <td class="name">${r.disp} ${tag}<span class="lab">${r.lab}</span></td>
     <td class="scorecell">${bar}</td>
@@ -317,8 +322,9 @@ heat.querySelectorAll('.hcell[data-tip]').forEach(c=>{
     `<text class="ax" x="${X(t)}" y="${H-m.b+18}" text-anchor="middle">$${t.toFixed(2)}</text>`; });
   s+=`<text class="axl" x="${m.l+iw/2}" y="${H-6}" text-anchor="middle">cost per incident (USD)</text>`;
   s+=`<text class="axl" transform="translate(14,${m.t+ih/2}) rotate(-90)" text-anchor="middle">mean SRE score</text>`;
-  // "free" divider near x=0
-  s+=`<line x1="${X(0)}" y1="${m.t}" x2="${X(0)}" y2="${m.t+ih}" stroke="var(--line)" stroke-width="1"/>`;
+  // x=0 = subscription CLIs (no per-incident meter — not "free")
+  s+=`<line x1="${X(0)}" y1="${m.t}" x2="${X(0)}" y2="${m.t+ih}" stroke="var(--cli)" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>`;
+  s+=`<text class="ax" x="${X(0)+5}" y="${m.t+11}" fill="var(--cli)">subscription · not metered</text>`;
   // points
   DATA.rows.forEach(r=>{
     const cx=X(Math.min(r.cost_per,xmax)), cy=Y(r.mean);

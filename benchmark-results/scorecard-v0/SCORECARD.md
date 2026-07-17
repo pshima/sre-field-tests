@@ -1,6 +1,6 @@
 # SRE Field Tests — Scorecard v0
 
-*First cross-model run — 2026-07-12. 108 instances · 8 contestants · 6 scenarios · $7.53 total (OpenRouter; CLIs on subscription).*
+*First cross-model run — 2026-07-12. 108 instances · 8 contestants · 6 scenarios · $7.53 OpenRouter API spend (Claude & Codex CLIs on separate paid subscriptions, not metered per incident).*
 
 An interactive version is in [`scorecard.html`](scorecard.html).
 
@@ -10,14 +10,17 @@ Mean composite over all 6 scenarios. `pass^k` = scenarios resolved on **every** 
 
 | # | Contestant | Type | SRE score | Full | pass^k | Diag | Remed | $/inc |
 |---|---|---|--:|--:|:--:|--:|--:|--:|
-| 1 | Codex | CLI | **0.92** | 15/18 | 4/6 | 0.95 | 1.00 | free |
-| 2 | Claude Code | CLI | **0.83** | 13/18 | 3/6 | 0.94 | 0.89 | free |
+| 1 | Codex | CLI | **0.92** | 15/18 | 4/6 | 0.95 | 1.00 | plan * |
+| 2 | Claude Code | CLI | **0.83** | 13/18 | 3/6 | 0.94 | 0.89 | plan * |
 | 3 | qwen/qwen3.7-max | raw | **0.62** | 6/12 | 2/6 | 0.55 | 0.75 | $0.056 |
 | 4 | deepseek/deepseek-v4-pro | raw | **0.54** | 4/12 | 1/6 | 0.48 | 0.83 | $0.099 |
 | 5 | x-ai/grok-4.5 | raw | **0.45** | 4/12 | 1/6 | 0.46 | 0.58 | $0.059 |
 | 6 | z-ai/glm-4.5 | raw | **0.31** | 0/12 | 0/6 | 0.00 | 0.67 | $0.031 |
 | 7 | moonshotai/kimi-k2.6 | raw | **0.26** | 1/12 | 0/6 | 0.08 | 0.42 | $0.078 |
 | 8 | google/gemini-3.1-pro-preview | raw | **0.26** | 0/12 | 0/6 | 0.00 | 0.50 | $0.303 |
+
+
+> `*` **plan** = the CLI agents run on **paid Claude/Codex subscriptions** — $0 *marginal* OpenRouter cost, but a flat monthly plan (not per-incident, **not free**), so it isn't directly comparable to the per-token raw-model costs.
 
 ## Per-scenario composite
 
@@ -36,7 +39,7 @@ Mean composite over all 6 scenarios. `pass^k` = scenarios resolved on **every** 
 
 - **Grade the recovered state, not the transcript.** After the agent finishes, a separate observer keeps recording; the grader asserts whether the service is healthy and *sustained under load*, whether the fix holds, and whether any destructive/unnecessary action was taken.
 - **Reliability is the headline** — `pass^k` (all k seeds resolve) over the mean.
-- **Two harness classes:** `claude-cli` / `codex-cli` drive the incident inside their native coding CLIs on subscription (\$0 API); the six frontier models run through one neutral, fully-disclosed Go tool-loop (`neutral-go`) via OpenRouter, with prompt caching.
+- **Two harness classes:** `claude-cli` / `codex-cli` drive the incident inside their native coding CLIs on **paid subscriptions** (flat plan; $0 *marginal* API cost, not free); the six frontier models run through one neutral, fully-disclosed Go tool-loop (`neutral-go`) via OpenRouter, with prompt caching.
 
 ## Caveat — two diagnosis-0.00 rows under review
 
