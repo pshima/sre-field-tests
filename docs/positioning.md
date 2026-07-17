@@ -68,7 +68,8 @@ is both the gap and the reason this can become a credible new "SRE score" row.
 - Deterministic-snapshot tier (Cloud-OpsBench/ITBench) alongside live-injection, as a separate
   scorecard column suited to model-card tables.
 - Held-out private split + canary GUID + scenario-refresh cadence (LiveBench) against contamination.
-- Cost/efficiency scoring ($/incident, tool-call efficiency).
+- Cost/efficiency scoring — **$/incident + token accounting are shipped** (with prompt caching);
+  tool-call / interaction efficiency is next.
 - The "monitoring depends on the failed thing" dimension (AWS/Slack/Datadog/Meta) — diagnose-while-blind.
 - Native-CLI harness adapters for "model + its own harness" columns — **Claude Code and Codex are
-  built and validated**; Gemini CLI is next.
+  built and validated** (and run in scorecard v0); Gemini CLI is next.

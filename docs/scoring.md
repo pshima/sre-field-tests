@@ -55,8 +55,11 @@ Per `(model, scenario, harness)` across seeds:
 - `mttr_median_seconds` over resolved instances.
 
 Following Miller/Anthropic "Adding Error Bars to Evals": ≥3 seeds/model, paired comparisons,
-real CIs. **v1 has a single scenario → wide CIs, disclosed explicitly.** Tight CIs need many
-scenarios / ~1000 instances — that is the roadmap, not v1.
+real CIs. **Scorecard v0 spans 6 scenarios × 8 agents (108 instances) at 2–3 seeds — enough to
+rank and to expose reliability gaps, but the CIs are still wide and disclosed as such.** Tight CIs
+need many more scenarios / ~1000 instances — that is the roadmap. The first run is the
+[live scorecard](https://pshima.github.io/sre-field-tests/); source in
+[`benchmark-results/scorecard-v0/`](../benchmark-results/scorecard-v0/).
 
 ## The grader's own correctness gate
 
